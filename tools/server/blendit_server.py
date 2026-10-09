@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import secrets
+import struct
 import subprocess
 import threading
 import uuid
@@ -42,6 +43,41 @@ def public_job(job: dict) -> dict:
     return {key: value for key, value in job.items() if key != "process"}
 
 
+def validate_generated_pack(output: Path) -> None:
+    required = set(ALLOWED_FILES)
+    missing = sorted(name for name in required
+                     if not (output / name).is_file() or (output / name).stat().st_size == 0)
+    if missing:
+        raise RuntimeError("Generated pack is incomplete; missing or empty: " + ", ".join(missing))
+
+    manifest_path = output / "manifest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise RuntimeError("Generated manifest is unreadable: " + str(exc)) from exc
+    outputs = manifest.get("outputs")
+    if not isinstance(outputs, list) or not outputs:
+        raise RuntimeError("Generated manifest has no output list")
+    for name in outputs:
+        if not isinstance(name, str) or name not in ALLOWED_FILES:
+            raise RuntimeError("Manifest contains an unsupported output name")
+        path = output / name
+        if not path.is_file() or path.stat().st_size == 0:
+            raise RuntimeError("Manifest output is missing or empty: " + name)
+
+    glb_path = output / "blendit_asset_pack.glb"
+    with glb_path.open("rb") as handle:
+        header = handle.read(12)
+    if len(header) != 12:
+        raise RuntimeError("Combined GLB header is truncated")
+    magic, version, declared_length = struct.unpack("<4sII", header)
+    if magic != b"glTF" or version != 2 or declared_length != glb_path.stat().st_size:
+        raise RuntimeError("Combined GLB file failed structural validation")
+    with (output / "preview.png").open("rb") as handle:
+        if handle.read(8) != b"\\x89PNG\\r\\n\\x1a\\n":
+            raise RuntimeError("Preview PNG signature is invalid")
+
+
 def generate(job_id: str) -> None:
     with jobs_lock:
         jobs[job_id]["status"] = "running"
@@ -61,6 +97,7 @@ def generate(job_id: str) -> None:
                 raise RuntimeError(tail)
             if "BLENDIT_GENERATION_OK" not in result.stdout:
                 raise RuntimeError("Blender exited without the generator success marker.")
+            validate_generated_pack(OUTPUT)
             with jobs_lock:
                 jobs[job_id].update(status="ready", message="Asset pack generated and validated.",
                                     log=result.stdout[-5000:], finished_at=now())
