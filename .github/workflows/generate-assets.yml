@@ -98,13 +98,57 @@ jobs:
           extends SceneTree
 
           func _initialize() -> void:
+              var scene := Node3D.new()
+              scene.name = "BlenditPlaytest"
+              root.add_child(scene)
+
+              var world := WorldEnvironment.new()
+              var environment := Environment.new()
+              environment.background_mode = Environment.BG_SKY
+              environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+              environment.ambient_light_color = Color(0.48, 0.52, 0.60)
+              environment.ambient_light_energy = 0.7
+              world.environment = environment
+              scene.add_child(world)
+
+              var sun := DirectionalLight3D.new()
+              sun.rotation_degrees = Vector3(-48.0, -32.0, 0.0)
+              sun.light_energy = 1.8
+              scene.add_child(sun)
+
+              var ground := StaticBody3D.new()
+              ground.name = "GroundWithCollision"
+              var ground_mesh := MeshInstance3D.new()
+              var plane := BoxMesh.new()
+              plane.size = Vector3(24.0, 0.3, 16.0)
+              ground_mesh.mesh = plane
+              ground_mesh.position.y = -0.15
+              var ground_material := StandardMaterial3D.new()
+              ground_material.albedo_color = Color(0.16, 0.19, 0.22)
+              ground_material.roughness = 0.92
+              ground_mesh.material_override = ground_material
+              ground.add_child(ground_mesh)
+              var ground_collision := CollisionShape3D.new()
+              var ground_shape := BoxShape3D.new()
+              ground_shape.size = plane.size
+              ground_collision.shape = ground_shape
+              ground_collision.position.y = -0.15
+              ground.add_child(ground_collision)
+              scene.add_child(ground)
+
+              var camera := Camera3D.new()
+              camera.position = Vector3(10.0, 9.0, 13.0)
+              camera.look_at(Vector3(0.0, 0.0, 0.0), Vector3.UP)
+              camera.current = true
+              scene.add_child(camera)
+
               var files := DirAccess.get_files_at("res://assets")
               var checked := 0
+              var colliders := 0
               for file_name in files:
                   if not file_name.to_lower().ends_with(".glb"):
                       continue
-                  var resource_path := "res://assets/" + file_name
-                  var packed := ResourceLoader.load(resource_path) as PackedScene
+                  var packed := ResourceLoader.load("res://assets/" + file_name) as PackedScene
                   if packed == null:
                       push_error("Godot could not import GLB as PackedScene: " + file_name)
                       quit(1)
@@ -114,14 +158,39 @@ jobs:
                       push_error("GLB scene is empty after instantiation: " + file_name)
                       quit(1)
                       return
-                  root.add_child(instance)
+                  var body := StaticBody3D.new()
+                  body.name = file_name.get_basename() + "_CollisionBody"
+                  body.position = Vector3(float(checked % 5) * 3.2 - 6.4, 0.0, float(checked / 5) * 3.4 - 1.7)
+                  body.add_child(instance)
+                  scene.add_child(body)
+
+                  var bounds := AABB()
+                  var has_bounds := false
+                  var stack: Array[Node] = [instance]
+                  while not stack.is_empty():
+                      var node: Node = stack.pop_back()
+                      for child in node.get_children():
+                          stack.append(child)
+                      if node is MeshInstance3D and node.mesh != null:
+                          var mesh_node := node as MeshInstance3D
+                          var mesh_bounds := mesh_node.transform * mesh_node.mesh.get_aabb()
+                          bounds = mesh_bounds if not has_bounds else bounds.merge(mesh_bounds)
+                          has_bounds = true
+                  if has_bounds and bounds.size.length() > 0.01:
+                      var shape_node := CollisionShape3D.new()
+                      var shape := BoxShape3D.new()
+                      shape.size = Vector3(maxf(bounds.size.x, 0.15), maxf(bounds.size.y, 0.15), maxf(bounds.size.z, 0.15))
+                      shape_node.shape = shape
+                      shape_node.position = bounds.position + bounds.size * 0.5
+                      body.add_child(shape_node)
+                      colliders += 1
                   checked += 1
-                  print("Godot import OK: ", file_name, " (", instance.get_child_count(), " root children)")
-              if checked < 5:
-                  push_error("Expected at least five GLBs, got " + str(checked))
+                  print("Playtest scene added: ", file_name, " | mesh bounds: ", has_bounds)
+              if checked < 5 or colliders < 5:
+                  push_error("Expected >=5 imported assets and collision proxies; got assets=" + str(checked) + ", colliders=" + str(colliders))
                   quit(1)
                   return
-              print("Godot smoke test passed for ", checked, " standalone GLBs.")
+              print("Godot play-scene test passed: ", checked, " GLBs, ", colliders, " asset collision proxies, lit environment and collidable ground.")
               quit(0)
           EOF
           "$GODOT" --headless --editor --path build/engine-smoke --import
