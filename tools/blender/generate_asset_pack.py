@@ -6,6 +6,7 @@ Run:
 import argparse
 import json
 import sys
+import struct
 from math import radians
 from pathlib import Path
 
@@ -173,6 +174,54 @@ def setup_camera_and_lights():
     fill.rotation_euler = (radians(25), 0, radians(-35))
 
 
+def validate_outputs(output, manifest):
+    required = [
+        "blendit_asset_pack.blend",
+        "blendit_asset_pack.glb",
+        "preview.png",
+        "manifest.json",
+        *[asset["glb_file"] for asset in manifest["assets"]],
+    ]
+    for filename in required:
+        path = output / filename
+        if not path.is_file() or path.stat().st_size == 0:
+            raise RuntimeError("Required output is missing or empty: " + filename)
+
+    glb_path = output / "blendit_asset_pack.glb"
+    with glb_path.open("rb") as handle:
+        header = handle.read(12)
+    if len(header) != 12:
+        raise RuntimeError("Combined GLB header is truncated")
+    magic, version, declared_length = struct.unpack("<4sII", header)
+    if magic != b"glTF" or version != 2 or declared_length != glb_path.stat().st_size:
+        raise RuntimeError("Combined GLB header or declared length is invalid")
+
+    preview_path = output / "preview.png"
+    with preview_path.open("rb") as handle:
+        if handle.read(8) != b"\\x89PNG\\r\\n\\x1a\\n":
+            raise RuntimeError("Preview is not a valid PNG file signature")
+
+    for asset in manifest["assets"]:
+        asset_path = output / asset["glb_file"]
+        with asset_path.open("rb") as handle:
+            asset_header = handle.read(12)
+        if len(asset_header) != 12:
+            raise RuntimeError("Truncated GLB for asset: " + asset["name"])
+        asset_magic, asset_version, asset_length = struct.unpack("<4sII", asset_header)
+        if (asset_magic != b"glTF" or asset_version != 2
+                or asset_length != asset_path.stat().st_size):
+            raise RuntimeError("Invalid GLB export for asset: " + asset["name"])
+
+    manifest_path = output / "manifest.json"
+    loaded = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if len(loaded.get("assets", [])) != len(manifest["assets"]):
+        raise RuntimeError("Manifest asset count does not match generated assets")
+    for filename in loaded.get("outputs", []):
+        path = output / filename
+        if not path.is_file() or path.stat().st_size == 0:
+            raise RuntimeError("Manifest output is missing or empty: " + filename)
+
+
 def main():
     args = parse_args()
     output = Path(args.output_dir).resolve()
@@ -269,6 +318,7 @@ def main():
         "notes": "Procedural starter pack; inspect assets and performance before production use.",
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    validate_outputs(output, manifest)
     print("BLENDIT_GENERATION_OK")
     print("Output directory:", output)
     print("Assets generated:", len(manifest_assets))
