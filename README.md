@@ -54,3 +54,39 @@ Use **Actions → Generate Blender Asset Pack → Run workflow**. The workflow i
 - Material and texture libraries
 - Batch generation by category and reusable presets
 - Automated import/export smoke tests for Godot and other target tools
+
+## Android companion app (PC-hosted Blender)
+
+A first Android client lives in `android_app/`. It connects over a trusted local network to a computer running Blender and this repository's local bridge. The phone is the control panel; the computer performs the actual 3D generation.
+
+### Run the bridge on your computer
+
+1. Install Blender 4.2+ and Python 3.10+; clone this repository.
+2. Open a terminal in the repository root.
+3. Set a private token with at least 20 characters, then start the service:
+
+   **Linux/macOS**
+   ```bash
+   export BLENDIT_TOKEN='replace-with-a-long-private-random-token'
+   python3 tools/server/blendit_server.py
+   ```
+
+   **Windows PowerShell**
+   ```powershell
+   $env:BLENDIT_TOKEN = "replace-with-a-long-private-random-token"
+   py tools/server/blendit_server.py
+   ```
+
+4. Find your computer's private LAN IP address (for example `192.168.1.10`). Allow TCP port `8765` only on your private/home network if the firewall asks.
+5. Keep the phone and computer on the same trusted Wi-Fi. In the app, enter `http://COMPUTER-LAN-IP:8765` and the same token.
+6. Tap **توليد الحزمة الأولية على الحاسوب**. The app will show the job state and let you preview/share the resulting files.
+
+Do not expose port 8765 to the public internet or use this plain-HTTP bridge on an untrusted network. The token is a local-network safeguard, not a replacement for TLS on the internet.
+
+### Android project status
+
+- The first client includes connection settings, a generation-job status view, preview, asset listing, and file sharing.
+- The first bridge release deliberately runs only the reviewed starter-pack generator. It does not execute arbitrary code or claim to create custom prompts, rigged characters, animations, or full scenes yet.
+- CI runs bridge API safety tests, Flutter analysis/widget tests, and builds a debug APK artifact. A green workflow is required before calling that build verified.
+- The current workflow generates Android platform scaffolding during CI; run `flutter create --platforms=android --project-name blendit_mobile --org com.blendit .` from `android_app/` before building locally for the first time.
+
