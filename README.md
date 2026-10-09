@@ -12,7 +12,7 @@ Blendit is the central, reusable Blender asset-generation workshop for game deve
 
 ## Current starter pack
 
-The initial procedural pack contains stylized fantasy props (a wooden crate, brass lantern, crystal, barrel, and a mahogany/brass carriage-inspired prop). It is a foundation for expanding into characters, rigging, animation, environments, VFX, and cinematic shot templates.
+The procedural pack now contains nine stylized fantasy assets: a wooden crate, brass lantern, crystal, barrel, mahogany/brass carriage-inspired prop, low-poly rock cluster, evergreen pine, modular stone wall segment, and wooden bridge segment. These are reusable starting assets, not finished production art; inspect the preview and import representative GLBs into the target engine before shipping.
 
 ## Requirements
 
@@ -30,7 +30,7 @@ blender --background --factory-startup --python tools/blender/generate_asset_pac
 Outputs include:
 - `build/assets/blendit_asset_pack.blend` — editable master scene
 - `build/assets/blendit_asset_pack.glb` — combined GLB pack
-- `build/assets/crate.glb`, `lantern.glb`, `crystal.glb`, `barrel.glb`, `carriage.glb` — standalone assets
+- `build/assets/crate.glb`, `lantern.glb`, `crystal.glb`, `barrel.glb`, `carriage.glb`, `rock_cluster.glb`, `pine_tree.glb`, `stone_wall.glb`, `bridge_segment.glb` — standalone assets
 - `build/assets/preview.png` — rendered contact-sheet-style scene preview
 - `build/assets/manifest.json` — asset inventory and generator metadata
 
