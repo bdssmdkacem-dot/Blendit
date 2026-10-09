@@ -179,7 +179,10 @@ jobs:
                           stack.append(child)
                       if node is MeshInstance3D and node.mesh != null:
                           var mesh_node := node as MeshInstance3D
-                          var mesh_bounds := mesh_node.transform * mesh_node.mesh.get_aabb()
+                          # Compute bounds in the imported asset's local space while
+                          # retaining every parent/node transform from the GLB hierarchy.
+                          var asset_local_transform := instance.global_transform.affine_inverse() * mesh_node.global_transform
+                          var mesh_bounds := asset_local_transform * mesh_node.mesh.get_aabb()
                           bounds = mesh_bounds if not has_bounds else bounds.merge(mesh_bounds)
                           has_bounds = true
                   if has_bounds and bounds.size.length() > 0.01:
