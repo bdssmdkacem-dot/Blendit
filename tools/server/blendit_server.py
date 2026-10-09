@@ -75,7 +75,7 @@ def validate_generated_pack(output: Path) -> None:
     if magic != b"glTF" or version != 2 or declared_length != glb_path.stat().st_size:
         raise RuntimeError("Combined GLB file failed structural validation")
     with (output / "preview.png").open("rb") as handle:
-        if handle.read(8) != b"\\x89PNG\\r\\n\\x1a\\n":
+        if handle.read(8) != bytes([137, 80, 78, 71, 13, 10, 26, 10]):
             raise RuntimeError("Preview PNG signature is invalid")
 
 
