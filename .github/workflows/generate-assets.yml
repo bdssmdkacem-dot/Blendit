@@ -1,0 +1,58 @@
+name: Generate Blender Asset Pack
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/blender/**"
+      - ".github/workflows/generate-assets.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Blender and utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+          blender --version
+
+      - name: Generate procedural asset pack
+        run: |
+          blender --background --factory-startup --python tools/blender/generate_asset_pack.py -- --output-dir "$GITHUB_WORKSPACE/build/assets"
+
+      - name: Verify generated outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in \
+            build/assets/blendit_asset_pack.blend \
+            build/assets/blendit_asset_pack.glb \
+            build/assets/manifest.json
+          do
+            test -s "$file"
+            echo "Verified: $file ($(stat -c%s "$file") bytes)"
+          done
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path("build/assets/manifest.json").read_text())
+          assert len(manifest["assets"]) >= 5, "Expected at least five starter assets"
+          assert all(item["object_count"] > 0 for item in manifest["assets"]), "Empty asset entry found"
+          print("Manifest check passed:", ", ".join(item["name"] for item in manifest["assets"]))
+          PY
+
+      - name: Upload generated asset pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: blendit-generated-assets
+          path: build/assets/
+          if-no-files-found: error
+          retention-days: 30
