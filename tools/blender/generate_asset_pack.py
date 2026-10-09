@@ -267,7 +267,7 @@ def validate_outputs(output, manifest):
 
     preview_path = output / "preview.png"
     with preview_path.open("rb") as handle:
-        if handle.read(8) != b"\\x89PNG\\r\\n\\x1a\\n":
+        if handle.read(8) != bytes([137, 80, 78, 71, 13, 10, 26, 10]):
             raise RuntimeError("Preview is not a valid PNG file signature")
 
     for asset in manifest["assets"]:
