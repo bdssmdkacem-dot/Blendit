@@ -95,6 +95,13 @@ def create_crate(origin, wood, trim):
     for dz in (0.12, 0.82):
         parts.append(cube("Crate | brass band", (x, y - 0.506, z + dz), (0.94, 0.035, 0.07), trim, 0.015))
     parts.append(cube("Crate | front slat", (x, y - 0.515, z + 0.47), (0.84, 0.035, 0.11), trim, 0.015))
+    # Corner straps make the silhouette read as a reinforced, game-ready prop.
+    for dx in (-0.44, 0.44):
+        parts.append(cube(
+            "Crate | corner reinforcement",
+            (x + dx, y - 0.526, z + 0.48),
+            (0.065, 0.035, 0.82), trim, 0.012
+        ))
     return parts
 
 
@@ -142,7 +149,26 @@ def create_carriage_prop(origin, wood, brass, velvet):
     ]
     for dx in (-0.62, 0.62):
         for dy in (-0.58, 0.58):
-            parts.append(cylinder("Carriage | wheel", (x + dx, y + dy, z + 0.22), 0.28, 0.11, brass, vertices=16, rotation=(radians(90), 0, 0)))
+            wheel_center = (x + dx, y + dy, z + 0.22)
+            parts.append(cylinder(
+                "Carriage | wooden wheel core", wheel_center, 0.28, 0.11,
+                mahogany, vertices=16, rotation=(radians(90), 0, 0)
+            ))
+            # A raised brass rim and a visible axle cap add depth from side views.
+            outer_y = y + dy + (0.067 if dy > 0 else -0.067)
+            bpy.ops.mesh.primitive_torus_add(
+                major_segments=16, minor_segments=6, location=(x + dx, outer_y, z + 0.22),
+                major_radius=0.235, minor_radius=0.035,
+                rotation=(radians(90), 0, 0)
+            )
+            rim = bpy.context.object
+            rim.name = "Carriage | brass wheel rim"
+            assign(rim, brass)
+            parts.append(rim)
+            parts.append(cylinder(
+                "Carriage | axle hub", (x + dx, y + dy, z + 0.22),
+                0.085, 0.16, brass, vertices=12, rotation=(radians(90), 0, 0)
+            ))
     for dx in (-0.62, 0.62):
         parts.append(cube("Carriage | window", (x + dx, y - 0.54, z + 0.95), (0.3, 0.045, 0.32), brass, 0.025))
     return parts
