@@ -36,15 +36,16 @@ Outputs include:
 
 ## Automated generation
 
-Use **Actions → Generate Blender Asset Pack → Run workflow**. The workflow installs Blender, generates the pack headlessly, checks that the expected files exist and are non-empty, then uploads the pack as a downloadable workflow artifact.
+Use **Actions → Generate Blender Asset Pack → Run workflow**. The workflow installs Blender, generates the pack headlessly, checks that the expected files exist and are non-empty, validates each GLB header and each standalone asset's local coordinates, then uploads the pack as a downloadable workflow artifact. A successful CI run verifies technical export checks; it does not replace visual review of `preview.png` or import testing in the target game engine.
 
 ## Asset production rules
 
 1. Prefer procedural, editable source over opaque one-off outputs.
 2. Use sensible scale, named objects/materials, clean transforms, and predictable export settings.
-3. Check that exports are produced before calling a generation run successful.
-4. Keep mobile game assets reasonably lightweight; create higher-detail cinematic variants when needed.
-5. Track third-party assets and their licenses separately. Generated assets should not silently bundle unlicensed external content.
+3. Export every standalone GLB around its own local origin; scene-layout coordinates belong only in the combined pack/preview.
+4. Check file structure, manifest completeness, PNG signature, and standalone GLB local coordinates before calling a generation run successful.
+5. Keep mobile game assets reasonably lightweight; create higher-detail cinematic variants when needed.
+6. Track third-party assets and their licenses separately. Generated assets should not silently bundle unlicensed external content.
 
 ## Planned expansion
 
