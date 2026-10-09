@@ -355,7 +355,7 @@ class _WorkshopHomeState extends State<WorkshopHome> {
                   headers: _headers,
                   height: 190,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox(
+                  errorBuilder: (context, error, stackTrace) => const SizedBox(
                     height: 100,
                     child: Center(child: Text('تعذّر تحميل المعاينة')),
                   ),
