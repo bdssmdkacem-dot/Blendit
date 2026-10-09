@@ -204,6 +204,38 @@ def create_carriage_prop(origin, wood, mahogany, brass, velvet, dark_metal):
     parts.append(cube("Carriage | lower brass pinstripe", (x, y - 0.545, z + 0.39), (1.45, 0.028, 0.045), brass, 0.01))
     for dx in (-0.78, 0.78):
         parts.append(cube("Carriage | corner fitting", (x + dx, y - 0.55, z + 0.52), (0.07, 0.035, 0.12), brass, 0.012))
+
+    # Make the carriage read as a usable vehicle, not a decorated box:
+    # a centered crest, a visible door latch, a boarding step, and twin shafts.
+    parts.append(cylinder(
+        "Carriage | brass door crest", (x, y - 0.566, z + 1.03),
+        0.105, 0.035, brass, vertices=12, rotation=(radians(90), 0, 0)
+    ))
+    parts.append(sphere(
+        "Carriage | crimson crest inset", (x, y - 0.589, z + 1.03),
+        (0.052, 0.018, 0.052), velvet
+    ))
+    parts.append(cube(
+        "Carriage | brass door latch", (x + 0.39, y - 0.568, z + 0.70),
+        (0.045, 0.035, 0.13), brass, 0.012
+    ))
+    parts.append(cube(
+        "Carriage | boarding step", (x, y - 0.69, z + 0.29),
+        (0.62, 0.42, 0.09), mahogany, 0.025
+    ))
+    parts.append(cube(
+        "Carriage | step brass edge", (x, y - 0.705, z + 0.335),
+        (0.62, 0.035, 0.025), brass, 0.008
+    ))
+    for dx in (-0.53, 0.53):
+        parts.append(cube(
+            "Carriage | forward shaft", (x + dx, y - 1.45, z + 0.25),
+            (0.09, 1.75, 0.09), mahogany, 0.018
+        ))
+        parts.append(cube(
+            "Carriage | shaft brass tip", (x + dx, y - 2.31, z + 0.25),
+            (0.11, 0.10, 0.11), brass, 0.015
+        ))
     return parts
 
 
