@@ -1,8 +1,10 @@
 import json
+import struct
 import tempfile
 import threading
 import unittest
 from http.server import ThreadingHTTPServer
+from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -87,6 +89,26 @@ class BridgeApiTests(unittest.TestCase):
         with self.assertRaises(HTTPError) as caught:
             urlopen(request, timeout=3)
         self.assertEqual(caught.exception.code, 400)
+
+    def test_generated_pack_validation_rejects_missing_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(RuntimeError, "incomplete"):
+                bridge.validate_generated_pack(Path(directory))
+
+    def test_generated_pack_validation_rejects_invalid_glb(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            for filename in bridge.ALLOWED_FILES:
+                (output / filename).write_bytes(b"placeholder")
+            (output / "manifest.json").write_text(json.dumps({
+                "outputs": sorted(bridge.ALLOWED_FILES - {"manifest.json"})
+            }), encoding="utf-8")
+            (output / "preview.png").write_bytes(b"\\x89PNG\\r\\n\\x1a\\nrest")
+            (output / "blendit_asset_pack.glb").write_bytes(
+                struct.pack("<4sII", b"NOPE", 2, 12)
+            )
+            with self.assertRaisesRegex(RuntimeError, "GLB"):
+                bridge.validate_generated_pack(output)
 
 
 if __name__ == "__main__":
