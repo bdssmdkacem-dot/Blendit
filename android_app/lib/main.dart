@@ -235,8 +235,14 @@ class _WorkshopHomeState extends State<WorkshopHome> {
     final active = _jobState == 'queued' || _jobState == 'running';
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Blendit Workshop'),
-        subtitle: const Text('ورشة الأصول ثلاثية الأبعاد'),
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Blendit Workshop'),
+            Text('ورشة الأصول ثلاثية الأبعاد', style: TextStyle(fontSize: 12)),
+          ],
+        ),
         actions: [
           IconButton(
             tooltip: 'تحديث الأصول',
