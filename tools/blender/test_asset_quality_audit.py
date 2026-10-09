@@ -16,7 +16,7 @@ SPEC.loader.exec_module(AUDIT)
 
 
 def write_glb(path: Path, *, index_count: int = 3, material_index: int = 0,
-              index_component_type: int = 5123) -> None:
+              index_component_type: int = 5123, position_type: str = "VEC3") -> None:
     document = {
         "asset": {"version": "2.0", "generator": "Blendit audit tests"},
         "scene": 0,
@@ -32,7 +32,7 @@ def write_glb(path: Path, *, index_count: int = 3, material_index: int = 0,
         }],
         "materials": [{"name": "Test material"}],
         "accessors": [
-            {"componentType": 5126, "count": 3, "type": "VEC3",
+            {"componentType": 5126, "count": 3, "type": position_type,
              "min": [0, 0, 0], "max": [1, 1, 0]},
             {"componentType": index_component_type, "count": index_count, "type": "SCALAR",
              "min": [0], "max": [2]},
@@ -58,6 +58,14 @@ class AssetQualityAuditTests(unittest.TestCase):
             self.assertEqual(report["status"], "pass")
             self.assertEqual(report["triangle_count"], 1)
             self.assertEqual(report["material_count"], 1)
+
+    def test_rejects_invalid_position_accessor_type(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "invalid-position-type.glb"
+            write_glb(path, position_type="SCALAR")
+            report = AUDIT.audit_asset(path)
+            self.assertEqual(report["status"], "fail")
+            self.assertIn("1_primitives_without_positions", report["issues"])
 
     def test_rejects_index_count_not_divisible_by_three(self):
         with tempfile.TemporaryDirectory() as directory:
