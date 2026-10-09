@@ -25,6 +25,7 @@ From the repository root, run:
 
 ```bash
 blender --background --factory-startup --python tools/blender/generate_asset_pack.py -- --output-dir build/assets
+python3 tools/blender/audit_asset_quality.py build/assets
 ```
 
 Outputs include:
