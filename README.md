@@ -28,10 +28,11 @@ blender --background --factory-startup --python tools/blender/generate_asset_pac
 ```
 
 Outputs include:
-- `build/assets/blendit_asset_pack.blend`
-- `build/assets/blendit_asset_pack.glb`
-- `build/assets/preview.png`
-- `build/assets/manifest.json`
+- `build/assets/blendit_asset_pack.blend` — editable master scene
+- `build/assets/blendit_asset_pack.glb` — combined GLB pack
+- `build/assets/crate.glb`, `lantern.glb`, `crystal.glb`, `barrel.glb`, `carriage.glb` — standalone assets
+- `build/assets/preview.png` — rendered contact-sheet-style scene preview
+- `build/assets/manifest.json` — asset inventory and generator metadata
 
 ## Automated generation
 
