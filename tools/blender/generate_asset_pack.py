@@ -165,12 +165,40 @@ def create_carriage_prop(origin, wood, brass, velvet):
             rim.name = "Carriage | brass wheel rim"
             assign(rim, brass)
             parts.append(rim)
+            # Eight visible wooden spokes make the wheels read as crafted
+            # wagon wheels instead of plain discs when viewed from the side.
+            for spoke_index in range(8):
+                angle = spoke_index * (2.0 * 3.141592653589793 / 8.0)
+                bpy.ops.mesh.primitive_cube_add(
+                    size=1,
+                    location=(
+                        x + dx + 0.125 * __import__("math").sin(angle),
+                        y + dy,
+                        z + 0.22 + 0.125 * __import__("math").cos(angle),
+                    ),
+                )
+                spoke = bpy.context.object
+                spoke.name = "Carriage | wooden wheel spoke"
+                spoke.dimensions = (0.045, 0.075, 0.27)
+                spoke.rotation_euler[1] = angle
+                bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+                assign(spoke, mahogany)
+                bevel(spoke, 0.008, 1)
+                parts.append(spoke)
             parts.append(cylinder(
                 "Carriage | axle hub", (x + dx, y + dy, z + 0.22),
                 0.085, 0.16, brass, vertices=12, rotation=(radians(90), 0, 0)
             ))
     for dx in (-0.62, 0.62):
-        parts.append(cube("Carriage | window", (x + dx, y - 0.54, z + 0.95), (0.3, 0.045, 0.32), brass, 0.025))
+        # Recessed dark glass and a four-sided brass frame give each side
+        # window depth and a more legible silhouette in game lighting.
+        parts.append(cube("Carriage | dark window glass", (x + dx, y - 0.548, z + 0.95), (0.235, 0.025, 0.255), dark_metal, 0.012))
+        parts.append(cube("Carriage | window frame", (x + dx, y - 0.568, z + 0.95), (0.32, 0.035, 0.045), brass, 0.01))
+        parts.append(cube("Carriage | window frame", (x + dx, y - 0.568, z + 0.95), (0.045, 0.035, 0.32), brass, 0.01))
+    # Decorative lower pinstripe and corner fittings break up the large flat body.
+    parts.append(cube("Carriage | lower brass pinstripe", (x, y - 0.545, z + 0.39), (1.45, 0.028, 0.045), brass, 0.01))
+    for dx in (-0.78, 0.78):
+        parts.append(cube("Carriage | corner fitting", (x + dx, y - 0.55, z + 0.52), (0.07, 0.035, 0.12), brass, 0.012))
     return parts
 
 
