@@ -139,7 +139,7 @@ def create_barrel(origin, wood, trim):
     return parts
 
 
-def create_carriage_prop(origin, wood, brass, velvet):
+def create_carriage_prop(origin, wood, mahogany, brass, velvet, dark_metal):
     x, y, z = origin
     parts = [
         cube("Carriage | mahogany cabin", (x, y, z + 0.82), (1.75, 1.05, 1.1), wood, 0.1),
@@ -370,7 +370,7 @@ def main():
         ("Lantern", (-1.0, 0.0, 0.0), lambda p: create_lantern(p, brass, dark_metal, glow)),
         ("Crystal", (1.0, 0.0, 0.0), lambda p: create_crystal(p, crystal_mat, dark_metal)),
         ("Barrel", (3.0, 0.0, 0.0), lambda p: create_barrel(p, wood, brass)),
-        ("Carriage", (0.0, 2.2, 0.0), lambda p: create_carriage_prop(p, mahogany, brass, velvet)),
+        ("Carriage", (0.0, 2.2, 0.0), lambda p: create_carriage_prop(p, wood, mahogany, brass, velvet, dark_metal)),
         ("Rock_Cluster", (-4.8, 2.4, 0.0), lambda p: create_rock_cluster(p, stone, stone_highlight)),
         ("Pine_Tree", (-2.3, 3.4, 0.0), lambda p: create_pine_tree(p, pine_bark, pine_foliage)),
         ("Stone_Wall", (2.5, 3.0, 0.0), lambda p: create_stone_wall(p, stone, stone_highlight)),
