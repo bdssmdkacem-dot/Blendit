@@ -74,6 +74,9 @@ jobs:
           print("Manifest check passed:", ", ".join(item["name"] for item in manifest["assets"]))
           PY
 
+      - name: Audit mesh geometry and material assignments
+        run: python3 tools/blender/audit_asset_quality.py build/assets
+
       - name: Import standalone GLBs in Godot 4
         shell: bash
         run: |
