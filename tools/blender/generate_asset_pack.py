@@ -152,7 +152,7 @@ def create_carriage_prop(origin, wood, brass, velvet):
             wheel_center = (x + dx, y + dy, z + 0.22)
             parts.append(cylinder(
                 "Carriage | wooden wheel core", wheel_center, 0.28, 0.11,
-                mahogany, vertices=16, rotation=(radians(90), 0, 0)
+                wood, vertices=16, rotation=(radians(90), 0, 0)
             ))
             # A raised brass rim and a visible axle cap add depth from side views.
             outer_y = y + dy + (0.067 if dy > 0 else -0.067)
