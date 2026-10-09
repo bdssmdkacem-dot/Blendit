@@ -11,6 +11,7 @@ import os
 import secrets
 import struct
 import subprocess
+import sys
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -20,6 +21,7 @@ from urllib.parse import unquote, urlparse
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERATOR = ROOT / "tools" / "blender" / "generate_asset_pack.py"
+AUDITOR = ROOT / "tools" / "blender" / "audit_asset_quality.py"
 OUTPUT = ROOT / "build" / "assets"
 BLENDER = os.environ.get("BLENDIT_BLENDER", "blender")
 HOST = os.environ.get("BLENDIT_HOST", "0.0.0.0")
@@ -33,6 +35,7 @@ ALLOWED_FILES = {
     "blendit_asset_pack.blend", "blendit_asset_pack.glb", "preview.png", "manifest.json",
     "crate.glb", "lantern.glb", "crystal.glb", "barrel.glb", "carriage.glb",
     "rock_cluster.glb", "pine_tree.glb", "stone_wall.glb", "bridge_segment.glb",
+    "asset_quality_report.json",
 }
 
 
@@ -98,6 +101,13 @@ def generate(job_id: str) -> None:
                 raise RuntimeError(tail)
             if "BLENDIT_GENERATION_OK" not in result.stdout:
                 raise RuntimeError("Blender exited without the generator success marker.")
+            audit = subprocess.run(
+                [sys.executable, str(AUDITOR), str(OUTPUT)],
+                cwd=str(ROOT), capture_output=True, text=True, timeout=120, check=False,
+            )
+            if audit.returncode != 0:
+                details = (audit.stderr or audit.stdout or "Asset quality audit failed.")[-5000:]
+                raise RuntimeError("Asset quality audit failed; pack is not ready for delivery.\n" + details)
             validate_generated_pack(OUTPUT)
             with jobs_lock:
                 jobs[job_id].update(status="ready", message="Asset pack generated and validated.",
@@ -232,6 +242,8 @@ def main() -> None:
         raise SystemExit("Set BLENDIT_TOKEN to a private random token of at least 20 characters before starting.")
     if not GENERATOR.is_file():
         raise SystemExit("Generator not found: " + str(GENERATOR))
+    if not AUDITOR.is_file():
+        raise SystemExit("Asset quality auditor not found: " + str(AUDITOR))
     try:
         version = subprocess.run([BLENDER, "--version"], capture_output=True, text=True, timeout=15, check=False)
     except (OSError, subprocess.TimeoutExpired) as exc:
