@@ -74,6 +74,59 @@ jobs:
           print("Manifest check passed:", ", ".join(item["name"] for item in manifest["assets"]))
           PY
 
+      - name: Import standalone GLBs in Godot 4
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_VERSION="4.3"
+          curl -fsSL "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -o /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          GODOT="$(find /tmp/godot -maxdepth 1 -type f -name 'Godot_*_linux.x86_64' -print -quit)"
+          test -n "$GODOT"
+          chmod +x "$GODOT"
+          mkdir -p build/engine-smoke/assets
+          cp build/assets/*.glb build/engine-smoke/assets/
+          cat > build/engine-smoke/project.godot <<'EOF'
+          config_version=5
+          [application]
+          config/name="Blendit Asset Import Smoke Test"
+          [rendering]
+          renderer/rendering_method="gl_compatibility"
+          renderer/rendering_method.mobile="gl_compatibility"
+          EOF
+          cat > build/engine-smoke/smoke.gd <<'EOF'
+          extends SceneTree
+
+          func _initialize() -> void:
+              var files := DirAccess.get_files_at("res://assets")
+              var checked := 0
+              for file_name in files:
+                  if not file_name.to_lower().ends_with(".glb"):
+                      continue
+                  var resource_path := "res://assets/" + file_name
+                  var packed := ResourceLoader.load(resource_path) as PackedScene
+                  if packed == null:
+                      push_error("Godot could not import GLB as PackedScene: " + file_name)
+                      quit(1)
+                      return
+                  var instance := packed.instantiate()
+                  if instance == null or instance.get_child_count() == 0:
+                      push_error("GLB scene is empty after instantiation: " + file_name)
+                      quit(1)
+                      return
+                  root.add_child(instance)
+                  checked += 1
+                  print("Godot import OK: ", file_name, " (", instance.get_child_count(), " root children)")
+              if checked < 5:
+                  push_error("Expected at least five GLBs, got " + str(checked))
+                  quit(1)
+                  return
+              print("Godot smoke test passed for ", checked, " standalone GLBs.")
+              quit(0)
+          EOF
+          "$GODOT" --headless --editor --path build/engine-smoke --import
+          "$GODOT" --headless --path build/engine-smoke --script res://smoke.gd
+
       - name: Upload generated asset pack
         uses: actions/upload-artifact@v4
         with:
