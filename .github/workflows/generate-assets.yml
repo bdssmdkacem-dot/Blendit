@@ -181,8 +181,8 @@ jobs:
                           var mesh_node := node as MeshInstance3D
                           # Compute bounds in the imported asset's local space while
                           # retaining every parent/node transform from the GLB hierarchy.
-                          var asset_local_transform := instance.global_transform.affine_inverse() * mesh_node.global_transform
-                          var mesh_bounds := asset_local_transform * mesh_node.mesh.get_aabb()
+                          var asset_local_transform: Transform3D = instance.global_transform.affine_inverse() * mesh_node.global_transform
+                          var mesh_bounds: AABB = asset_local_transform * mesh_node.mesh.get_aabb()
                           bounds = mesh_bounds if not has_bounds else bounds.merge(mesh_bounds)
                           has_bounds = true
                   if has_bounds and bounds.size.length() > 0.01:
