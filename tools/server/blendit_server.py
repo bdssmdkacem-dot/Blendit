@@ -154,7 +154,14 @@ class Handler(BaseHTTPRequestHandler):
         if urlparse(self.path).path != "/api/generate":
             self.send_json(404, {"error": "Not found"})
             return
-        length = int(self.headers.get("Content-Length", "0"))
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            self.send_json(400, {"error": "Invalid Content-Length"})
+            return
+        if length < 0:
+            self.send_json(400, {"error": "Invalid Content-Length"})
+            return
         if length > 4096:
             self.send_json(413, {"error": "Request too large"})
             return
@@ -162,6 +169,9 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(length) or b"{}")
         except (json.JSONDecodeError, UnicodeDecodeError):
             self.send_json(400, {"error": "Invalid JSON"})
+            return
+        if not isinstance(body, dict):
+            self.send_json(400, {"error": "JSON body must be an object"})
             return
         # The first release only runs the reviewed repository generator; it never executes client-supplied code.
         if body.get("task", "starter_pack") != "starter_pack":
