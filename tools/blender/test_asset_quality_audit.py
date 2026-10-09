@@ -15,7 +15,8 @@ assert SPEC and SPEC.loader
 SPEC.loader.exec_module(AUDIT)
 
 
-def write_glb(path: Path, *, index_count: int = 3, material_index: int = 0) -> None:
+def write_glb(path: Path, *, index_count: int = 3, material_index: int = 0,
+              index_component_type: int = 5123) -> None:
     document = {
         "asset": {"version": "2.0", "generator": "Blendit audit tests"},
         "scene": 0,
@@ -33,7 +34,7 @@ def write_glb(path: Path, *, index_count: int = 3, material_index: int = 0) -> N
         "accessors": [
             {"componentType": 5126, "count": 3, "type": "VEC3",
              "min": [0, 0, 0], "max": [1, 1, 0]},
-            {"componentType": 5123, "count": index_count, "type": "SCALAR",
+            {"componentType": index_component_type, "count": index_count, "type": "SCALAR",
              "min": [0], "max": [2]},
         ],
         "buffers": [{"byteLength": 0}],
@@ -62,6 +63,14 @@ class AssetQualityAuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "invalid-indices.glb"
             write_glb(path, index_count=4)
+            report = AUDIT.audit_asset(path)
+            self.assertEqual(report["status"], "fail")
+            self.assertIn("1_primitives_with_invalid_index_data", report["issues"])
+
+    def test_rejects_invalid_index_component_type(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "invalid-index-type.glb"
+            write_glb(path, index_component_type=5126)
             report = AUDIT.audit_asset(path)
             self.assertEqual(report["status"], "fail")
             self.assertIn("1_primitives_with_invalid_index_data", report["issues"])
