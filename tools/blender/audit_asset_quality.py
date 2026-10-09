@@ -35,24 +35,63 @@ def audit_asset(path: Path) -> dict:
     triangle_count = 0
     missing_position = 0
     missing_material = 0
+    invalid_indices = 0
+    invalid_modes = 0
     for primitive in primitives:
         attributes = primitive.get("attributes", {})
         position_index = attributes.get("POSITION")
-        if position_index is None or not isinstance(position_index, int) or position_index >= len(accessors):
+        valid_position = (
+            isinstance(position_index, int)
+            and not isinstance(position_index, bool)
+            and 0 <= position_index < len(accessors)
+        )
+        if not valid_position:
             missing_position += 1
         else:
             accessor = accessors[position_index]
-            vertex_count += int(accessor.get("count", 0))
+            count = accessor.get("count", 0)
+            if not isinstance(count, int) or isinstance(count, bool) or count <= 0:
+                missing_position += 1
+            else:
+                vertex_count += count
         material_index = primitive.get("material")
-        if material_index is None or not isinstance(material_index, int) or material_index >= len(materials):
+        valid_material = (
+            isinstance(material_index, int)
+            and not isinstance(material_index, bool)
+            and 0 <= material_index < len(materials)
+        )
+        if not valid_material:
             missing_material += 1
         mode = primitive.get("mode", 4)
-        if mode == 4:
-            index = primitive.get("indices")
-            if isinstance(index, int) and index < len(accessors):
-                triangle_count += int(accessors[index].get("count", 0)) // 3
-            elif position_index is not None and isinstance(position_index, int) and position_index < len(accessors):
-                triangle_count += int(accessors[position_index].get("count", 0)) // 3
+        if mode != 4:
+            invalid_modes += 1
+            continue
+        index = primitive.get("indices")
+        if index is not None:
+            valid_index = (
+                isinstance(index, int)
+                and not isinstance(index, bool)
+                and 0 <= index < len(accessors)
+            )
+            if not valid_index:
+                invalid_indices += 1
+                continue
+            index_accessor = accessors[index]
+            index_count = index_accessor.get("count", 0)
+            if not isinstance(index_count, int) or isinstance(index_count, bool) or index_count < 3:
+                invalid_indices += 1
+                continue
+            if index_count % 3:
+                invalid_indices += 1
+                continue
+            triangle_count += index_count // 3
+        elif valid_position:
+            count = accessors[position_index].get("count", 0)
+            if isinstance(count, int) and not isinstance(count, bool) and count >= 3:
+                if count % 3:
+                    invalid_indices += 1
+                else:
+                    triangle_count += count // 3
     issues = []
     if not meshes or not primitives:
         issues.append("no_mesh_primitives")
@@ -62,6 +101,10 @@ def audit_asset(path: Path) -> dict:
         issues.append(f"{missing_position}_primitives_without_positions")
     if missing_material:
         issues.append(f"{missing_material}_primitives_without_material")
+    if invalid_indices:
+        issues.append(f"{invalid_indices}_primitives_with_invalid_index_data")
+    if invalid_modes:
+        issues.append(f"{invalid_modes}_primitives_not_triangle_lists")
     if vertex_count <= 0 or triangle_count <= 0:
         issues.append("no_renderable_triangles")
     return {
