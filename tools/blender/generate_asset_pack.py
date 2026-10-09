@@ -148,8 +148,77 @@ def create_carriage_prop(origin, wood, brass, velvet):
     return parts
 
 
+
+def create_rock_cluster(origin, stone, highlight):
+    x, y, z = origin
+    parts = []
+    for dx, dy, dz, sx, sy, sz in [
+        (-0.28, 0.0, 0.26, 0.48, 0.42, 0.46),
+        (0.18, -0.04, 0.20, 0.40, 0.36, 0.34),
+        (0.02, 0.12, 0.49, 0.34, 0.32, 0.48),
+    ]:
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=1, location=(x + dx, y + dy, z + dz))
+        obj = bpy.context.object
+        obj.name = "Rock cluster | low-poly stone"
+        obj.scale = (sx, sy, sz)
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+        assign(obj, stone if dz < 0.4 else highlight)
+        parts.append(obj)
+    return parts
+
+
+def create_pine_tree(origin, bark, foliage):
+    x, y, z = origin
+    parts = [cylinder("Pine tree | trunk", (x, y, z + 0.62), 0.13, 1.24, bark, vertices=8)]
+    for height, radius in ((0.72, 0.62), (1.18, 0.49), (1.58, 0.34)):
+        bpy.ops.mesh.primitive_cone_add(
+            vertices=8, radius1=radius, radius2=0.035, depth=0.9,
+            location=(x, y, z + height)
+        )
+        crown = bpy.context.object
+        crown.name = "Pine tree | evergreen crown"
+        assign(crown, foliage)
+        parts.append(crown)
+    return parts
+
+
+def create_stone_wall(origin, stone, trim):
+    x, y, z = origin
+    parts = []
+    for row in range(2):
+        for column in range(3):
+            offset = 0.38 if row % 2 else 0.0
+            parts.append(cube(
+                "Stone wall | block",
+                (x + (column - 1) * 0.76 + offset, y, z + 0.34 + row * 0.68),
+                (0.72, 0.42, 0.62), stone, 0.045
+            ))
+    parts.append(cube("Stone wall | capstone", (x + 0.38, y, z + 1.42), (2.45, 0.5, 0.16), trim, 0.035))
+    return parts
+
+
+def create_bridge_segment(origin, wood, trim):
+    x, y, z = origin
+    parts = []
+    for index in range(5):
+        parts.append(cube(
+            "Bridge | deck plank",
+            (x, y + (index - 2) * 0.34, z + 0.18),
+            (2.2, 0.31, 0.16), wood, 0.025
+        ))
+    for side in (-1, 1):
+        parts.append(cube("Bridge | side beam", (x, y + side * 0.83, z + 0.30), (2.35, 0.12, 0.18), trim, 0.025))
+        for post_x in (-0.95, 0.0, 0.95):
+            parts.append(cube(
+                "Bridge | railing post",
+                (x + post_x, y + side * 0.83, z + 0.68),
+                (0.11, 0.11, 0.72), trim, 0.02
+            ))
+        parts.append(cube("Bridge | handrail", (x, y + side * 0.83, z + 1.05), (2.35, 0.14, 0.12), wood, 0.025))
+    return parts
+
 def setup_camera_and_lights():
-    bpy.ops.object.camera_add(location=(6.8, -10.5, 7.2))
+    bpy.ops.object.camera_add(location=(9.5, -15.5, 10.5))
     camera = bpy.context.object
     camera.name = "Preview Camera"
     direction = -camera.location
@@ -235,6 +304,10 @@ def main():
     velvet = material("Fabric | crimson velvet", (0.32, 0.012, 0.035), roughness=0.82)
     crystal_mat = material("Magic | turquoise crystal", (0.025, 0.48, 0.62), metallic=0.18, roughness=0.22)
     glow = material("Light | amber glass", (1.0, 0.34, 0.055), roughness=0.2)
+    stone = material("Stone | blue-grey", (0.20, 0.27, 0.32), roughness=0.88)
+    stone_highlight = material("Stone | cool highlight", (0.34, 0.41, 0.44), roughness=0.82)
+    pine_bark = material("Wood | pine bark", (0.20, 0.085, 0.035), roughness=0.9)
+    pine_foliage = material("Foliage | deep evergreen", (0.035, 0.22, 0.13), roughness=0.86)
     glow.node_tree.nodes["Principled BSDF"].inputs["Emission Color"].default_value = (1.0, 0.12, 0.015, 1.0)
     glow.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 2.0
 
@@ -244,6 +317,10 @@ def main():
         ("Crystal", (1.0, 0.0, 0.0), lambda p: create_crystal(p, crystal_mat, dark_metal)),
         ("Barrel", (3.0, 0.0, 0.0), lambda p: create_barrel(p, wood, brass)),
         ("Carriage", (0.0, 2.2, 0.0), lambda p: create_carriage_prop(p, mahogany, brass, velvet)),
+        ("Rock_Cluster", (-4.8, 2.4, 0.0), lambda p: create_rock_cluster(p, stone, stone_highlight)),
+        ("Pine_Tree", (-2.3, 3.4, 0.0), lambda p: create_pine_tree(p, pine_bark, pine_foliage)),
+        ("Stone_Wall", (2.5, 3.0, 0.0), lambda p: create_stone_wall(p, stone, stone_highlight)),
+        ("Bridge_Segment", (5.0, 2.8, 0.0), lambda p: create_bridge_segment(p, wood, brass)),
     ]
     manifest_assets = []
     for name, origin, builder in groups:
@@ -266,13 +343,13 @@ def main():
 
     # A simple neutral floor makes the preview useful but is excluded from the asset collections.
     floor_mat = material("Studio | midnight blue", (0.025, 0.04, 0.065), roughness=0.8)
-    cube("Studio floor", (0.0, 0.8, -0.12), (10.5, 7.0, 0.18), floor_mat, 0.02)
+    cube("Studio floor", (0.0, 0.8, -0.12), (15.5, 10.0, 0.18), floor_mat, 0.02)
     setup_camera_and_lights()
 
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_EEVEE_NEXT" if hasattr(scene, "eevee") is False else "BLENDER_EEVEE_NEXT"
-    scene.render.resolution_x = 1200
-    scene.render.resolution_y = 900
+    scene.render.resolution_x = 1440
+    scene.render.resolution_y = 1080
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = "PNG"
     scene.render.filepath = str(output / "preview.png")
