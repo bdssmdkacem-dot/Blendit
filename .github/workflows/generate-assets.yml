@@ -18,6 +18,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Test GLB quality audit
+        run: python3 -m unittest tools/blender/test_asset_quality_audit.py
+
       - name: Install Blender and utilities
         run: |
           sudo apt-get update
