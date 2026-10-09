@@ -347,7 +347,8 @@ def main():
     setup_camera_and_lights()
 
     scene = bpy.context.scene
-    scene.render.engine = "BLENDER_EEVEE_NEXT" if hasattr(scene, "eevee") is False else "BLENDER_EEVEE_NEXT"
+    engine_items = scene.render.bl_rna.properties["engine"].enum_items
+    scene.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in engine_items else "BLENDER_EEVEE"
     scene.render.resolution_x = 1440
     scene.render.resolution_y = 1080
     scene.render.resolution_percentage = 100
