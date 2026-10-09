@@ -43,7 +43,9 @@ jobs:
           channel: stable
           cache: true
       - name: Generate Android platform scaffolding
-        run: flutter create --platforms=android --project-name blendit_mobile --org com.blendit .
+        run: |
+          flutter create --platforms=android --project-name blendit_mobile --org com.blendit .
+          python ../android_app/tool/prepare_android.py
       - name: Resolve packages
         run: flutter pub get
       - name: Analyze
