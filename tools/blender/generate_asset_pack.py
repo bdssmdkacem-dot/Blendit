@@ -367,19 +367,35 @@ def main():
     for asset in manifest_assets:
         collection = bpy.data.collections.get(asset["collection"])
         bpy.ops.object.select_all(action="DESELECT")
-        for obj in collection.objects:
+        selected_objects = list(collection.objects)
+        for obj in selected_objects:
             obj.select_set(True)
-        if collection.objects:
-            bpy.context.view_layer.objects.active = collection.objects[0]
-        filename = asset["name"].lower() + ".glb"
-        bpy.ops.export_scene.gltf(
-            filepath=str(output / filename),
-            export_format="GLB",
-            use_selection=True,
-        )
+        if selected_objects:
+            bpy.context.view_layer.objects.active = selected_objects[0]
+
+        # Standalone GLBs must be centered around the asset origin, not retain
+        # the staging position used to compose the combined preview scene.
+        origin = asset["origin"]
+        original_locations = {obj: obj.location.copy() for obj in selected_objects}
+        try:
+            for obj in selected_objects:
+                obj.location.x -= origin[0]
+                obj.location.y -= origin[1]
+                obj.location.z -= origin[2]
+            filename = asset["name"].lower() + ".glb"
+            bpy.ops.export_scene.gltf(
+                filepath=str(output / filename),
+                export_format="GLB",
+                use_selection=True,
+            )
+        finally:
+            for obj, location in original_locations.items():
+                obj.location = location
+
         if not (output / filename).is_file() or (output / filename).stat().st_size == 0:
             raise RuntimeError("Individual asset export failed: " + filename)
         asset["glb_file"] = filename
+        asset["export_origin"] = [0.0, 0.0, 0.0]
         individual_outputs.append(filename)
     bpy.ops.object.select_all(action="DESELECT")
 
