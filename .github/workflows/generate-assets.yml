@@ -21,12 +21,12 @@ jobs:
       - name: Install Blender and utilities
         run: |
           sudo apt-get update
-          sudo apt-get install -y blender
+          sudo apt-get install -y blender python3-numpy
           blender --version
 
       - name: Generate procedural asset pack
         run: |
-          blender --background --factory-startup --python tools/blender/generate_asset_pack.py -- --output-dir "$GITHUB_WORKSPACE/build/assets"
+          PYTHONPATH="/usr/lib/python3/dist-packages${PYTHONPATH:+:$PYTHONPATH}" blender --background --factory-startup --python tools/blender/generate_asset_pack.py -- --output-dir "$GITHUB_WORKSPACE/build/assets"
 
       - name: Verify generated outputs
         shell: bash
