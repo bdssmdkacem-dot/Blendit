@@ -53,9 +53,15 @@ jobs:
           assert glb[:4] == b"glTF", "GLB magic header is invalid"
           declared_length = struct.unpack("<I", glb[8:12])[0]
           assert declared_length == len(glb), "GLB declared length does not match file size"
+          for asset in manifest["assets"]:
+              asset_path = root / asset["glb_file"]
+              assert asset_path.is_file() and asset_path.stat().st_size > 20, f"Missing individual GLB: {asset_path.name}"
+              asset_bytes = asset_path.read_bytes()
+              assert asset_bytes[:4] == b"glTF", f"Invalid GLB header: {asset_path.name}"
+              assert struct.unpack("<I", asset_bytes[8:12])[0] == len(asset_bytes), f"Invalid GLB length: {asset_path.name}"
           png = (root / "preview.png").read_bytes()
           assert png[:8] == bytes([137, 80, 78, 71, 13, 10, 26, 10]), "Preview is not a PNG image"
-          print("Validated GLB container and PNG preview.")
+          print("Validated combined GLB, individual asset GLBs, and PNG preview.")
           print("Manifest check passed:", ", ".join(item["name"] for item in manifest["assets"]))
           PY
 
