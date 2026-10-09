@@ -88,5 +88,5 @@ Do not expose port 8765 to the public internet or use this plain-HTTP bridge on 
 - The first client includes connection settings, a generation-job status view, preview, asset listing, and file sharing.
 - The first bridge release deliberately runs only the reviewed starter-pack generator. It does not execute arbitrary code or claim to create custom prompts, rigged characters, animations, or full scenes yet.
 - CI runs bridge API safety tests, Flutter analysis/widget tests, and builds a debug APK artifact. A green workflow is required before calling that build verified.
-- The current workflow generates Android platform scaffolding during CI; run `flutter create --platforms=android --project-name blendit_mobile --org com.blendit .` from `android_app/` before building locally for the first time.
+- The current workflow generates Android platform scaffolding during CI; run `flutter create --platforms=android --project-name blendit_mobile --org com.blendit .` from `android_app/`, then run `python tool/prepare_android.py` there before building locally for the first time. The helper enables cleartext HTTP for the private-LAN bridge; do not expose this development setup to the public internet.
 
