@@ -5,7 +5,6 @@ Run:
 """
 import argparse
 import json
-import os
 import sys
 from math import radians
 from pathlib import Path
@@ -238,10 +237,9 @@ def main():
     glb_path = output / "blendit_asset_pack.glb"
     bpy.ops.export_scene.gltf(filepath=str(glb_path), export_format="GLB", use_selection=False)
 
-    try:
-        bpy.ops.render.render(write_still=True)
-    except Exception as exc:
-        print("WARNING: preview render failed:", exc)
+    bpy.ops.render.render(write_still=True)
+    if not (output / "preview.png").is_file() or (output / "preview.png").stat().st_size == 0:
+        raise RuntimeError("Preview render did not produce a valid PNG file")
 
     manifest = {
         "generator": "Blendit Blender Asset Workshop",
