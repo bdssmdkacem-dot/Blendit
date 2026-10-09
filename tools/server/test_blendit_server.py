@@ -64,6 +64,30 @@ class BridgeApiTests(unittest.TestCase):
                          body={"task": "run-arbitrary-python"})
         self.assertEqual(caught.exception.code, 400)
 
+    def test_generation_rejects_non_object_json(self):
+        request = Request(
+            self.base + "/api/generate",
+            data=json.dumps(["starter_pack"]).encode("utf-8"),
+            headers={"Authorization": "Bearer " + bridge.TOKEN,
+                     "Content-Type": "application/json"},
+            method="POST",
+        )
+        with self.assertRaises(HTTPError) as caught:
+            urlopen(request, timeout=3)
+        self.assertEqual(caught.exception.code, 400)
+
+    def test_generation_rejects_invalid_json(self):
+        request = Request(
+            self.base + "/api/generate",
+            data=b"{invalid",
+            headers={"Authorization": "Bearer " + bridge.TOKEN,
+                     "Content-Type": "application/json"},
+            method="POST",
+        )
+        with self.assertRaises(HTTPError) as caught:
+            urlopen(request, timeout=3)
+        self.assertEqual(caught.exception.code, 400)
+
 
 if __name__ == "__main__":
     unittest.main()
