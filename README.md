@@ -33,10 +33,11 @@ Outputs include:
 - `build/assets/crate.glb`, `lantern.glb`, `crystal.glb`, `barrel.glb`, `carriage.glb`, `rock_cluster.glb`, `pine_tree.glb`, `stone_wall.glb`, `bridge_segment.glb` — standalone assets
 - `build/assets/preview.png` — rendered contact-sheet-style scene preview
 - `build/assets/manifest.json` — asset inventory and generator metadata
+- `build/assets/asset_quality_report.json` — per-asset mesh/primitive/triangle/material counts from the technical GLB audit
 
 ## Automated generation
 
-Use **Actions → Generate Blender Asset Pack → Run workflow**. The workflow installs Blender, generates the pack headlessly, checks that the expected files exist and are non-empty, validates each GLB header and each standalone asset's local coordinates, then uploads the pack as a downloadable workflow artifact. A successful CI run verifies technical export checks; it does not replace visual review of `preview.png` or import testing in the target game engine.
+Use **Actions → Generate Blender Asset Pack → Run workflow**. The workflow installs Blender, generates the pack headlessly, checks that the expected files exist and are non-empty, validates each GLB header and each standalone asset's local coordinates, then runs a technical GLB audit (renderable primitives, vertex/triangle counts, and material assignments), imports the standalone GLBs into a lit Godot 4 play scene with collision proxies, and uploads the pack plus `asset_quality_report.json` as a downloadable workflow artifact. A passing technical audit does not replace visual review of `preview.png` or actual inspection of the Godot scene.
 
 ## Asset production rules
 
