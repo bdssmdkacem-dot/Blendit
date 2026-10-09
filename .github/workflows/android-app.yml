@@ -1,0 +1,45 @@
+name: Android App CI
+
+on:
+  push:
+    paths:
+      - "android_app/**"
+      - ".github/workflows/android-app.yml"
+  pull_request:
+    paths:
+      - "android_app/**"
+      - ".github/workflows/android-app.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze-and-build:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: android_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Resolve packages
+        run: flutter pub get
+      - name: Analyze
+        run: flutter analyze --no-pub
+      - name: Test
+        run: flutter test --no-pub
+      - name: Build debug APK
+        run: flutter build apk --debug
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: blendit-android-debug-apk
+          path: android_app/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
