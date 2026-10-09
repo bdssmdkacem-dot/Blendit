@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(const BlenditApp());
 
@@ -209,6 +210,18 @@ class _WorkshopHomeState extends State<WorkshopHome> {
     }
   }
 
+  Future<void> _openTrellis() async {
+    final uri = Uri.parse('https://huggingface.co/spaces/microsoft/TRELLIS.2');
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && mounted) {
+        setState(() => _status = 'تعذّر فتح TRELLIS.2. تحقق من اتصال الإنترنت ثم أعد المحاولة.');
+      }
+    } catch (error) {
+      if (mounted) setState(() => _status = 'تعذّر فتح TRELLIS.2: $error');
+    }
+  }
+
   Future<void> _download(AssetFile asset) async {
     setState(() => _status = 'جارٍ تجهيز ${asset.name} للمشاركة...');
     try {
@@ -326,6 +339,49 @@ class _WorkshopHomeState extends State<WorkshopHome> {
               ),
             ),
             const SizedBox(height: 18),
+            _sectionTitle('تحويل صورة إلى مجسم 3D — TRELLIS.2'),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1D24),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFF6E503B)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.image_search, color: Color(0xFFE4B17D), size: 30),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'حوّل صورة إلى نموذج ثلاثي الأبعاد',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'يفتح هذا الخيار واجهة TRELLIS.2 لإنشاء نموذج بخامات PBR ثم تصديره بصيغة GLB. '
+                    'استخدم صورة واضحة لجسم واحد، ويفضّل خلفية شفافة. التوليد يحتاج GPU على الخادم؛ '
+                    'التوفر المجاني والانتظار يعتمدان على الاستضافة.',
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _openTrellis,
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('فتح TRELLIS.2 وتحويل الصورة'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 22),
             _sectionTitle('توليد الأصول'),
             const SizedBox(height: 8),
             const Text('المرحلة الحالية تولّد الحزمة التجريبية الموثوقة: صندوق، فانوس، بلورة، برميل، وعنصر عربة. إنشاء الطلبات المخصصة والشخصيات والتحريك سيأتي في مراحل لاحقة.'),
