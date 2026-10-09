@@ -32,6 +32,7 @@ job_slots = threading.BoundedSemaphore(MAX_JOBS)
 ALLOWED_FILES = {
     "blendit_asset_pack.blend", "blendit_asset_pack.glb", "preview.png", "manifest.json",
     "crate.glb", "lantern.glb", "crystal.glb", "barrel.glb", "carriage.glb",
+    "rock_cluster.glb", "pine_tree.glb", "stone_wall.glb", "bridge_segment.glb",
 }
 
 
