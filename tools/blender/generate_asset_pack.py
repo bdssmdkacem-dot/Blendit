@@ -233,9 +233,28 @@ def main():
     blend_path = output / "blendit_asset_pack.blend"
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_path))
 
-    # Export the complete pack as glTF 2.0 binary. Named collections make the assets separable in-engine.
+    # Export the complete pack and each named asset collection as standalone GLB files.
     glb_path = output / "blendit_asset_pack.glb"
     bpy.ops.export_scene.gltf(filepath=str(glb_path), export_format="GLB", use_selection=False)
+    individual_outputs = []
+    for asset in manifest_assets:
+        collection = bpy.data.collections.get(asset["collection"])
+        bpy.ops.object.select_all(action="DESELECT")
+        for obj in collection.objects:
+            obj.select_set(True)
+        if collection.objects:
+            bpy.context.view_layer.objects.active = collection.objects[0]
+        filename = asset["name"].lower() + ".glb"
+        bpy.ops.export_scene.gltf(
+            filepath=str(output / filename),
+            export_format="GLB",
+            use_selection=True,
+        )
+        if not (output / filename).is_file() or (output / filename).stat().st_size == 0:
+            raise RuntimeError("Individual asset export failed: " + filename)
+        asset["glb_file"] = filename
+        individual_outputs.append(filename)
+    bpy.ops.object.select_all(action="DESELECT")
 
     bpy.ops.render.render(write_still=True)
     if not (output / "preview.png").is_file() or (output / "preview.png").stat().st_size == 0:
@@ -246,7 +265,7 @@ def main():
         "schema_version": 1,
         "blender_version": bpy.app.version_string,
         "assets": manifest_assets,
-        "outputs": ["blendit_asset_pack.blend", "blendit_asset_pack.glb", "preview.png"],
+        "outputs": ["blendit_asset_pack.blend", "blendit_asset_pack.glb", *individual_outputs, "preview.png"],
         "notes": "Procedural starter pack; inspect assets and performance before production use.",
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
