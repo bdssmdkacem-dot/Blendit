@@ -59,9 +59,18 @@ jobs:
               asset_bytes = asset_path.read_bytes()
               assert asset_bytes[:4] == b"glTF", f"Invalid GLB header: {asset_path.name}"
               assert struct.unpack("<I", asset_bytes[8:12])[0] == len(asset_bytes), f"Invalid GLB length: {asset_path.name}"
+              assert asset.get("export_origin") == [0.0, 0.0, 0.0], f"Missing local export origin: {asset_path.name}"
+              json_length, json_type = struct.unpack("<II", asset_bytes[12:20])
+              assert json_type == 0x4E4F534A, f"Missing GLB JSON chunk: {asset_path.name}"
+              gltf = json.loads(asset_bytes[20:20 + json_length].decode("utf-8").rstrip(" \\0"))
+              for node in gltf.get("nodes", []):
+                  translation = node.get("translation", [0.0, 0.0, 0.0])
+                  assert all(abs(value) <= 4.0 for value in translation), (
+                      f"Asset seems to retain staging-space coordinates: {asset_path.name}: {translation}"
+                  )
           png = (root / "preview.png").read_bytes()
           assert png[:8] == bytes([137, 80, 78, 71, 13, 10, 26, 10]), "Preview is not a PNG image"
-          print("Validated combined GLB, individual asset GLBs, and PNG preview.")
+          print("Validated combined GLB, individual asset GLBs/local origins, and PNG preview.")
           print("Manifest check passed:", ", ".join(item["name"] for item in manifest["assets"]))
           PY
 
