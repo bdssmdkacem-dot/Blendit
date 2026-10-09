@@ -1,6 +1,8 @@
 # TRELLIS.2 image-to-3D workflow in Blendit
 
-Blendit now provides an Android entry point to the TRELLIS.2 image-to-3D demo. This first integration is intentionally a safe external hand-off: it does not pretend the remote model is running locally or that a public GPU endpoint is always free.
+Blendit now provides an Android entry point to the official TRELLIS.2 Hugging Face Space. This is an external hand-off, not an embedded inference engine: Blendit does not claim the remote model is running locally or that a public GPU endpoint is always free.
+
+Official entry point: https://huggingface.co/spaces/microsoft/TRELLIS.2
 
 ## Current workflow
 
