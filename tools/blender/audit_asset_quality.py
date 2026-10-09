@@ -20,9 +20,29 @@ def read_glb(path: Path) -> dict:
     if version != 2 or declared_length != len(data):
         raise ValueError(f"{path.name}: invalid GLB version/length")
     chunk_length, chunk_type = struct.unpack_from("<II", data, 12)
-    if chunk_type != 0x4E4F534A or 20 + chunk_length > len(data):
+    json_end = 20 + chunk_length
+    if chunk_type != 0x4E4F534A or json_end > len(data) or chunk_length % 4:
         raise ValueError(f"{path.name}: missing or invalid JSON chunk")
-    return json.loads(data[20:20 + chunk_length].decode("utf-8").rstrip(" \x00"))
+    try:
+        document = json.loads(data[20:json_end].decode("utf-8").rstrip(" \x00"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise ValueError(f"{path.name}: malformed GLB JSON chunk: {exc}") from exc
+    if not isinstance(document, dict) or document.get("asset", {}).get("version") != "2.0":
+        raise ValueError(f"{path.name}: missing glTF 2.0 asset metadata")
+    # GLB must contain a JSON chunk and may contain one BIN chunk; reject truncated
+    # or unaccounted trailing bytes instead of accepting a partial file.
+    offset = json_end
+    while offset < len(data):
+        if offset + 8 > len(data):
+            raise ValueError(f"{path.name}: truncated GLB chunk header")
+        length, kind = struct.unpack_from("<II", data, offset)
+        offset += 8
+        if length % 4 or offset + length > len(data):
+            raise ValueError(f"{path.name}: invalid GLB chunk length")
+        if kind not in (0x004E4942, 0x4E4F534A):
+            raise ValueError(f"{path.name}: unknown GLB chunk type")
+        offset += length
+    return document
 
 
 def audit_asset(path: Path) -> dict:
@@ -50,7 +70,9 @@ def audit_asset(path: Path) -> dict:
         else:
             accessor = accessors[position_index]
             count = accessor.get("count", 0)
-            if not isinstance(count, int) or isinstance(count, bool) or count <= 0:
+            if (not isinstance(count, int) or isinstance(count, bool) or count < 3
+                    or accessor.get("type") != "VEC3"
+                    or accessor.get("componentType") != 5126):
                 missing_position += 1
             else:
                 vertex_count += count
@@ -78,7 +100,9 @@ def audit_asset(path: Path) -> dict:
                 continue
             index_accessor = accessors[index]
             index_count = index_accessor.get("count", 0)
-            if not isinstance(index_count, int) or isinstance(index_count, bool) or index_count < 3:
+            if (not isinstance(index_count, int) or isinstance(index_count, bool) or index_count < 3
+                    or index_accessor.get("type") != "SCALAR"
+                    or index_accessor.get("componentType") not in (5121, 5123, 5125)):
                 invalid_indices += 1
                 continue
             if index_count % 3:
