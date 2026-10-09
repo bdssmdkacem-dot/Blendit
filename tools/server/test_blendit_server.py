@@ -90,6 +90,33 @@ class BridgeApiTests(unittest.TestCase):
             urlopen(request, timeout=3)
         self.assertEqual(caught.exception.code, 400)
 
+    def _write_validatable_pack(self, output):
+        for filename in bridge.ALLOWED_FILES:
+            (output / filename).write_bytes(b"placeholder")
+        (output / "manifest.json").write_text(json.dumps({
+            "outputs": sorted(bridge.ALLOWED_FILES - {"manifest.json"})
+        }), encoding="utf-8")
+        (output / "blendit_asset_pack.glb").write_bytes(
+            struct.pack("<4sII", b"glTF", 2, 12)
+        )
+        (output / "preview.png").write_bytes(
+            bytes([137, 80, 78, 71, 13, 10, 26, 10]) + b"test"
+        )
+
+    def test_generated_pack_validation_accepts_correct_png_signature(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            self._write_validatable_pack(output)
+            bridge.validate_generated_pack(output)
+
+    def test_generated_pack_validation_rejects_invalid_png_signature(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            self._write_validatable_pack(output)
+            (output / "preview.png").write_bytes(b"NOTPNG!!image-data")
+            with self.assertRaisesRegex(RuntimeError, "PNG signature"):
+                bridge.validate_generated_pack(output)
+
     def test_generated_pack_validation_rejects_missing_files(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaisesRegex(RuntimeError, "incomplete"):
