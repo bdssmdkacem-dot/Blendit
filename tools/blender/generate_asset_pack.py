@@ -453,7 +453,10 @@ def main():
 
     # Export the complete pack and each named asset collection as standalone GLB files.
     glb_path = output / "blendit_asset_pack.glb"
-    bpy.ops.export_scene.gltf(filepath=str(glb_path), export_format="GLB", use_selection=False)
+    bpy.ops.export_scene.gltf(
+        filepath=str(glb_path), export_format="GLB", use_selection=False,
+        export_draco_mesh_compression_enable=False,
+    )
     individual_outputs = []
     for asset in manifest_assets:
         collection = bpy.data.collections.get(asset["collection"])
@@ -478,6 +481,7 @@ def main():
                 filepath=str(output / filename),
                 export_format="GLB",
                 use_selection=True,
+                export_draco_mesh_compression_enable=False,
             )
         finally:
             for obj, location in original_locations.items():
