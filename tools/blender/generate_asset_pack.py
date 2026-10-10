@@ -304,6 +304,14 @@ def create_bridge_segment(origin, wood, trim):
             (x, y + (index - 2) * 0.34, z + 0.18),
             (2.2, 0.31, 0.16), wood, 0.025
         ))
+    # Structural cross-beams sit beneath the deck so the bridge reads as a
+    # supported, buildable prop from oblique camera angles, not floating planks.
+    for support_x in (-0.78, 0.0, 0.78):
+        parts.append(cube(
+            "Bridge | under-deck crossbeam",
+            (x + support_x, y, z + 0.045),
+            (0.16, 1.82, 0.16), trim, 0.025
+        ))
     for side in (-1, 1):
         parts.append(cube("Bridge | side beam", (x, y + side * 0.83, z + 0.30), (2.35, 0.12, 0.18), trim, 0.025))
         for post_x in (-0.95, 0.0, 0.95):
