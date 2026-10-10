@@ -52,6 +52,17 @@ jobs:
           manifest = json.loads((root / "manifest.json").read_text())
           assert len(manifest["assets"]) >= 5, "Expected at least five starter assets"
           assert all(item["object_count"] > 0 for item in manifest["assets"]), "Empty asset entry found"
+          assert manifest.get("style_preset") in {"storybook", "moonlit", "vibrant"}, "Unknown or missing art-style preset"
+          preview_files = [item.get("preview_file") for item in manifest["assets"]]
+          assert all(isinstance(name, str) and name for name in preview_files), "Missing per-asset preview reference"
+          assert len(set(preview_files)) == len(manifest["assets"]), "Per-asset preview filenames must be unique"
+          assert all(name in manifest.get("outputs", []) for name in preview_files), "Per-asset previews must be listed as outputs"
+          assert len(manifest.get("visual_review", {}).get("per_asset_previews", [])) == len(manifest["assets"]), "Expected one comparison image per asset"
+          for filename in preview_files:
+              preview_path = root / filename
+              assert preview_path.is_file() and preview_path.stat().st_size > 1000, f"Missing/empty per-asset preview: {filename}"
+              preview_bytes = preview_path.read_bytes()
+              assert preview_bytes[:8] == bytes([137, 80, 78, 71, 13, 10, 26, 10]), f"Invalid preview PNG: {filename}"
           glb = (root / "blendit_asset_pack.glb").read_bytes()
           assert glb[:4] == b"glTF", "GLB magic header is invalid"
           declared_length = struct.unpack("<I", glb[8:12])[0]
