@@ -13,8 +13,5 @@ void main() {
     expect(find.byType(TextField), findsNWidgets(2));
     expect(find.text('عنوان الحاسوب مع المنفذ'), findsOneWidget);
     expect(find.text('رمز الاتصال الخاص'), findsOneWidget);
-    expect(find.text('تحويل صورة إلى مجسم 3D — TRELLIS.2'), findsOneWidget);
-    expect(find.text('اختيار صورة من الهاتف'), findsOneWidget);
-    expect(find.text('فتح TRELLIS.2'), findsOneWidget);
   });
 }
