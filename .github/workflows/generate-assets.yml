@@ -254,3 +254,15 @@ jobs:
           path: build/assets/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish visual review bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: blendit-visual-review
+          path: |
+            build/assets/preview.png
+            build/assets/godot-playtest.png
+            build/assets/asset_quality_report.json
+            build/assets/manifest.json
+          if-no-files-found: error
+          retention-days: 30
