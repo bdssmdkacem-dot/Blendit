@@ -19,6 +19,12 @@ def parse_args():
     argv = argv[argv.index("--") + 1:] if "--" in argv else []
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", default="build/assets")
+    parser.add_argument(
+        "--style",
+        choices=("storybook", "moonlit", "vibrant"),
+        default="storybook",
+        help="Consistent material palette for generated assets",
+    )
     return parser.parse_args(argv)
 
 
@@ -389,17 +395,43 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     clear_scene()
 
-    mahogany = material("Wood | dark mahogany", (0.19, 0.055, 0.028), roughness=0.32)
-    wood = material("Wood | warm oak", (0.38, 0.17, 0.065), roughness=0.58)
-    brass = material("Metal | aged brass", (0.58, 0.32, 0.09), metallic=0.72, roughness=0.28)
+    # Palette presets are intentionally deterministic: geometry remains identical,
+    # while material colors and the studio treatment change as a coherent art direction.
+    palettes = {
+        "storybook": {
+            "mahogany": (0.19, 0.055, 0.028), "wood": (0.38, 0.17, 0.065),
+            "brass": (0.58, 0.32, 0.09), "velvet": (0.32, 0.012, 0.035),
+            "crystal": (0.025, 0.48, 0.62), "glow": (1.0, 0.34, 0.055),
+            "stone": (0.20, 0.27, 0.32), "highlight": (0.34, 0.41, 0.44),
+            "foliage": (0.035, 0.22, 0.13), "floor": (0.025, 0.04, 0.065),
+        },
+        "moonlit": {
+            "mahogany": (0.055, 0.035, 0.075), "wood": (0.16, 0.12, 0.22),
+            "brass": (0.28, 0.48, 0.62), "velvet": (0.16, 0.035, 0.24),
+            "crystal": (0.12, 0.36, 0.95), "glow": (0.18, 0.72, 1.0),
+            "stone": (0.12, 0.16, 0.27), "highlight": (0.32, 0.42, 0.62),
+            "foliage": (0.025, 0.14, 0.18), "floor": (0.012, 0.018, 0.05),
+        },
+        "vibrant": {
+            "mahogany": (0.22, 0.065, 0.025), "wood": (0.62, 0.28, 0.07),
+            "brass": (0.95, 0.56, 0.08), "velvet": (0.62, 0.025, 0.12),
+            "crystal": (0.025, 0.78, 0.82), "glow": (1.0, 0.62, 0.08),
+            "stone": (0.29, 0.34, 0.37), "highlight": (0.58, 0.65, 0.63),
+            "foliage": (0.035, 0.36, 0.12), "floor": (0.045, 0.055, 0.075),
+        },
+    }
+    palette = palettes[args.style]
+    mahogany = material("Wood | dark mahogany", palette["mahogany"], roughness=0.32)
+    wood = material("Wood | warm oak", palette["wood"], roughness=0.58)
+    brass = material("Metal | aged brass", palette["brass"], metallic=0.72, roughness=0.28)
     dark_metal = material("Metal | blackened iron", (0.055, 0.065, 0.07), metallic=0.55, roughness=0.4)
-    velvet = material("Fabric | crimson velvet", (0.32, 0.012, 0.035), roughness=0.82)
-    crystal_mat = material("Magic | turquoise crystal", (0.025, 0.48, 0.62), metallic=0.18, roughness=0.22)
-    glow = material("Light | amber glass", (1.0, 0.34, 0.055), roughness=0.2)
-    stone = material("Stone | blue-grey", (0.20, 0.27, 0.32), roughness=0.88)
-    stone_highlight = material("Stone | cool highlight", (0.34, 0.41, 0.44), roughness=0.82)
-    pine_bark = material("Wood | pine bark", (0.20, 0.085, 0.035), roughness=0.9)
-    pine_foliage = material("Foliage | deep evergreen", (0.035, 0.22, 0.13), roughness=0.86)
+    velvet = material("Fabric | velvet accent", palette["velvet"], roughness=0.82)
+    crystal_mat = material("Magic | faceted crystal", palette["crystal"], metallic=0.18, roughness=0.22)
+    glow = material("Light | luminous glass", palette["glow"], roughness=0.2)
+    stone = material("Stone | base", palette["stone"], roughness=0.88)
+    stone_highlight = material("Stone | cool highlight", palette["highlight"], roughness=0.82)
+    pine_bark = material("Wood | pine bark", palette["mahogany"], roughness=0.9)
+    pine_foliage = material("Foliage | evergreen", palette["foliage"], roughness=0.86)
     glow.node_tree.nodes["Principled BSDF"].inputs["Emission Color"].default_value = (1.0, 0.12, 0.015, 1.0)
     glow.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 2.0
 
@@ -434,7 +466,7 @@ def main():
         })
 
     # A simple neutral floor makes the preview useful but is excluded from the asset collections.
-    floor_mat = material("Studio | midnight blue", (0.025, 0.04, 0.065), roughness=0.8)
+    floor_mat = material("Studio | neutral backdrop", palette["floor"], roughness=0.8)
     cube("Studio floor", (0.0, 0.8, -0.12), (15.5, 10.0, 0.18), floor_mat, 0.02)
     setup_camera_and_lights()
 
@@ -543,6 +575,7 @@ def main():
         "generator": "Blendit Blender Asset Workshop",
         "schema_version": 2,
         "blender_version": bpy.app.version_string,
+        "style_preset": args.style,
         "assets": manifest_assets,
         "outputs": ["blendit_asset_pack.blend", "blendit_asset_pack.glb", *individual_outputs, "preview.png", *review_images],
         "visual_review": {
@@ -557,6 +590,8 @@ def main():
     print("BLENDIT_GENERATION_OK")
     print("Output directory:", output)
     print("Assets generated:", len(manifest_assets))
+    print("Style preset:", args.style)
+    print("Per-asset previews:", len(review_images))
 
 
 if __name__ == "__main__":
