@@ -6,10 +6,10 @@ Official entry point: https://huggingface.co/spaces/microsoft/TRELLIS.2
 
 ## Current workflow
 
-1. Open **تحويل صورة إلى مجسم 3D — TRELLIS.2** from the Android app.
-2. Upload a clear image of one foreground object. A transparent PNG is preferred.
-3. Generate the model, inspect the turntable preview, then use **Extract GLB**.
-4. Keep the downloaded GLB as a candidate asset, not automatically approved production art.
+1. In the Android app, choose a source image from the phone gallery; Blendit displays a local preview and rejects files larger than 20 MiB.
+2. Open the official TRELLIS.2 Space and manually select the same image in its interface. Blendit does not silently upload personal photos.
+3. Generate the model, inspect the hosted preview, and export/download GLB if the Space currently supports it.
+4. Treat the downloaded GLB as a candidate asset, not approved production art. The app does not yet automatically import the remote result into its local asset library.
 5. Import it into Blender and Godot to inspect scale, orientation, materials, topology, silhouette, and collisions before shipping.
 
 ## Cost and hardware
@@ -22,4 +22,4 @@ The image is uploaded to the hosting service when the user chooses it in the rem
 
 ## Next integration milestone
 
-Replace the external hand-off only after a stable inference endpoint is selected. The native flow should then add image selection, upload/progress/error states, a generation job ID, GLB download, file-size and GLB-header validation, and a preview/import check. Never place a private Hugging Face token in the Android app; use a user-controlled local GPU service or a secured server-side credential. Do not mark generated assets production-ready based on successful generation alone.
+Replace the external hand-off only after a stable inference endpoint is selected. Remaining integration work is a secure upload/progress/error flow, a generation job ID, GLB download into the Blendit library, file-size and GLB-header validation, and a preview/import check. Never place a private Hugging Face token in the Android app; use a user-controlled local GPU service or a secured server-side credential. Do not mark generated assets production-ready based on successful generation alone.
