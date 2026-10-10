@@ -16,7 +16,8 @@ SPEC.loader.exec_module(AUDIT)
 
 
 def write_glb(path: Path, *, index_count: int = 3, material_index: int = 0,
-              index_component_type: int = 5123, position_type: str = "VEC3") -> None:
+              index_component_type: int = 5123, position_type: str = "VEC3",
+              base_color_factor=None) -> None:
     document = {
         "asset": {"version": "2.0", "generator": "Blendit audit tests"},
         "scene": 0,
@@ -30,7 +31,11 @@ def write_glb(path: Path, *, index_count: int = 3, material_index: int = 0,
                 "mode": 4,
             }]
         }],
-        "materials": [{"name": "Test material"}],
+        "materials": [{
+            "name": "Test material",
+            **({"pbrMetallicRoughness": {"baseColorFactor": base_color_factor}}
+               if base_color_factor is not None else {}),
+        }],
         "accessors": [
             {"componentType": 5126, "count": 3, "type": position_type,
              "min": [0, 0, 0], "max": [1, 1, 0]},
@@ -90,6 +95,15 @@ class AssetQualityAuditTests(unittest.TestCase):
             report = AUDIT.audit_asset(path)
             self.assertEqual(report["status"], "fail")
             self.assertIn("1_primitives_without_material", report["issues"])
+
+
+    def test_rejects_malformed_pbr_material_values(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "invalid-pbr.glb"
+            write_glb(path, base_color_factor=[1.0, float("nan"), 0.5, 1.0])
+            report = AUDIT.audit_asset(path)
+            self.assertEqual(report["status"], "fail")
+            self.assertIn("1_materials_with_invalid_pbr_or_texture_references", report["issues"])
 
     def test_rejects_truncated_glb(self):
         with tempfile.TemporaryDirectory() as directory:
