@@ -261,6 +261,7 @@ jobs:
           name: blendit-visual-review
           path: |
             build/assets/preview.png
+            build/assets/preview_*.png
             build/assets/godot-playtest.png
             build/assets/asset_quality_report.json
             build/assets/manifest.json
