@@ -7,7 +7,7 @@ import argparse
 import json
 import sys
 import struct
-from math import radians
+from math import atan, radians, sin
 from mathutils import Vector
 from pathlib import Path
 
@@ -582,10 +582,10 @@ def main():
             view_direction = Vector((4.8, -7.0, 4.2)).normalized()
             sensor_width = max(camera.data.sensor_width, 1.0)
             aspect = scene.render.resolution_x / max(scene.render.resolution_y, 1)
-            horizontal_fov = 2.0 * __import__("math").atan(sensor_width / (2.0 * camera.data.lens))
-            vertical_fov = 2.0 * __import__("math").atan((sensor_width / aspect) / (2.0 * camera.data.lens))
+            horizontal_fov = 2.0 * atan(sensor_width / (2.0 * camera.data.lens))
+            vertical_fov = 2.0 * atan((sensor_width / aspect) / (2.0 * camera.data.lens))
             limiting_fov = min(horizontal_fov, vertical_fov)
-            distance = radius / max(__import__("math").sin(limiting_fov * 0.5), 0.01) * 1.18
+            distance = radius / max(sin(limiting_fov * 0.5), 0.01) * 1.18
             camera.location = target + view_direction * distance
             camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
             scene.render.filepath = str(output / ("preview_" + asset["name"].lower() + ".png"))
