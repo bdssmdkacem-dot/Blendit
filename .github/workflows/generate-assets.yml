@@ -144,9 +144,9 @@ jobs:
 
               var camera := Camera3D.new()
               camera.position = Vector3(10.0, 9.0, 13.0)
+              camera.basis = Basis.looking_at((Vector3.ZERO - camera.position).normalized(), Vector3.UP)
               camera.current = true
               scene.add_child(camera)
-              camera.look_at(Vector3(0.0, 0.0, 0.0), Vector3.UP)
 
               var files := DirAccess.get_files_at("res://assets")
               var checked := 0
@@ -231,8 +231,8 @@ jobs:
                     " assets=", checked, " colliders=", colliders)
               quit(0)
           EOF
-          xvfb-run -a "$GODOT" --editor --path build/engine-smoke --import
-          xvfb-run -a "$GODOT" --path build/engine-smoke --script res://smoke.gd
+          xvfb-run -a "$GODOT" --audio-driver Dummy --editor --path build/engine-smoke --import
+          xvfb-run -a "$GODOT" --audio-driver Dummy --path build/engine-smoke --script res://smoke.gd
           python3 - <<'PY'
           from pathlib import Path
           from PIL import Image, ImageStat
