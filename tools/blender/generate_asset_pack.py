@@ -8,6 +8,7 @@ import json
 import sys
 import struct
 from math import radians
+from mathutils import Vector
 from pathlib import Path
 
 import bpy
@@ -521,7 +522,7 @@ def main():
                     obj.hide_render = False
             ox, oy, oz = asset["origin"]
             camera.location = (ox + 4.8, oy - 7.0, oz + 4.2)
-            target = bpy.mathutils.Vector((ox, oy, oz + 0.65))
+            target = Vector((ox, oy, oz + 0.65))
             camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
             scene.render.filepath = str(output / ("preview_" + asset["name"].lower() + ".png"))
             bpy.ops.render.render(write_still=True)
