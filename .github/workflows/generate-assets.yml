@@ -84,7 +84,30 @@ jobs:
                   )
           png = (root / "preview.png").read_bytes()
           assert png[:8] == bytes([137, 80, 78, 71, 13, 10, 26, 10]), "Preview is not a PNG image"
-          print("Validated combined GLB, individual asset GLBs/local origins, and PNG preview.")
+
+          # A valid PNG signature and file size are not enough: reject blank,
+          # unexpectedly small, or nearly uniform comparison renders before
+          # publishing the visual-review artifact.
+          from PIL import Image, ImageStat
+          preview_names = ["preview.png", *preview_files]
+          for filename in preview_names:
+              image_path = root / filename
+              with Image.open(image_path) as source:
+                  image = source.convert("RGB")
+                  assert image.width >= 1000 and image.height >= 700, (
+                      f"Preview resolution is too small: {filename}: {image.size}"
+                  )
+                  deviation = sum(ImageStat.Stat(image).stddev) / 3
+                  assert deviation > 8.0, (
+                      f"Preview appears blank or nearly uniform: {filename} "
+                      f"(mean channel deviation {deviation:.2f})"
+                  )
+                  print(
+                      f"Visual preview smoke check passed: {filename}, "
+                      f"{image.width}x{image.height}, channel deviation={deviation:.2f}"
+                  )
+
+          print("Validated combined GLB, individual asset GLBs/local origins, and nonblank PNG previews.")
           print("Manifest check passed:", ", ".join(item["name"] for item in manifest["assets"]))
           PY
 
