@@ -7,6 +7,7 @@ still be paired with visual inspection of preview.png and the Godot play-scene.
 from __future__ import annotations
 
 import json
+import math
 import struct
 import sys
 from pathlib import Path
@@ -49,7 +50,56 @@ def audit_asset(path: Path) -> dict:
     gltf = read_glb(path)
     meshes = gltf.get("meshes", [])
     materials = gltf.get("materials", [])
+    textures = gltf.get("textures", [])
+    images = gltf.get("images", [])
     accessors = gltf.get("accessors", [])
+
+    # Reject malformed PBR values and dangling texture/image references before
+    # a GLB can be marked production-ready. Missing optional PBR fields are
+    # valid glTF defaults; explicitly supplied values must be well-formed.
+    invalid_materials = 0
+    for material in materials:
+        pbr = material.get("pbrMetallicRoughness", {})
+        if not isinstance(pbr, dict):
+            invalid_materials += 1
+            continue
+        invalid = False
+        for key, size in (("baseColorFactor", 4),):
+            value = pbr.get(key)
+            if value is not None and (
+                not isinstance(value, list) or len(value) != size
+                or any(not isinstance(v, (int, float)) or isinstance(v, bool)
+                       or not math.isfinite(v) or v < 0.0 or v > 1.0 for v in value)
+            ):
+                invalid = True
+        for key in ("metallicFactor", "roughnessFactor"):
+            value = pbr.get(key)
+            if value is not None and (
+                not isinstance(value, (int, float)) or isinstance(value, bool)
+                or not math.isfinite(value) or value < 0.0 or value > 1.0
+            ):
+                invalid = True
+        texture_infos = [
+            pbr.get("baseColorTexture"), pbr.get("metallicRoughnessTexture"),
+            material.get("normalTexture"), material.get("occlusionTexture"),
+            material.get("emissiveTexture"),
+        ]
+        for info in texture_infos:
+            if info is None:
+                continue
+            index = info.get("index") if isinstance(info, dict) else None
+            if not isinstance(index, int) or isinstance(index, bool) or not 0 <= index < len(textures):
+                invalid = True
+        if invalid:
+            invalid_materials += 1
+
+    invalid_textures = 0
+    for texture in textures:
+        source = texture.get("source")
+        if source is not None and (
+            not isinstance(source, int) or isinstance(source, bool) or not 0 <= source < len(images)
+        ):
+            invalid_textures += 1
     primitives = [primitive for mesh in meshes for primitive in mesh.get("primitives", [])]
     vertex_count = 0
     triangle_count = 0
@@ -121,6 +171,10 @@ def audit_asset(path: Path) -> dict:
         issues.append("no_mesh_primitives")
     if not materials:
         issues.append("no_materials")
+    if invalid_materials:
+        issues.append(f"{invalid_materials}_materials_with_invalid_pbr_or_texture_references")
+    if invalid_textures:
+        issues.append(f"{invalid_textures}_textures_with_invalid_image_references")
     if missing_position:
         issues.append(f"{missing_position}_primitives_without_positions")
     if missing_material:
