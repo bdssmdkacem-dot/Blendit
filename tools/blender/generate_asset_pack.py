@@ -494,17 +494,62 @@ def main():
         individual_outputs.append(filename)
     bpy.ops.object.select_all(action="DESELECT")
 
+    # Render the complete pack, then render a consistent, individually framed
+    # comparison image for every asset. The individual images are intended for
+    # review on a phone and make small assets easier to inspect than a single grid.
     bpy.ops.render.render(write_still=True)
     if not (output / "preview.png").is_file() or (output / "preview.png").stat().st_size == 0:
         raise RuntimeError("Preview render did not produce a valid PNG file")
 
+    camera = scene.camera
+    original_camera_location = camera.location.copy()
+    original_camera_rotation = camera.rotation_euler.copy()
+    original_filepath = scene.render.filepath
+    renderable_asset_objects = {
+        obj for asset in manifest_assets
+        for obj in bpy.data.collections[asset["collection"]].objects
+    }
+    review_images = []
+    try:
+        for asset in manifest_assets:
+            asset_objects = set(bpy.data.collections[asset["collection"]].objects)
+            for obj in renderable_asset_objects:
+                obj.hide_render = obj not in asset_objects
+            # Keep the neutral studio floor and all studio lights/camera visible.
+            for obj in scene.objects:
+                if obj.type in {"CAMERA", "LIGHT"} or obj.name == "Studio floor":
+                    obj.hide_render = False
+            ox, oy, oz = asset["origin"]
+            camera.location = (ox + 4.8, oy - 7.0, oz + 4.2)
+            target = bpy.mathutils.Vector((ox, oy, oz + 0.65))
+            camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
+            scene.render.filepath = str(output / ("preview_" + asset["name"].lower() + ".png"))
+            bpy.ops.render.render(write_still=True)
+            preview_file = Path(scene.render.filepath).name
+            preview_path = output / preview_file
+            if not preview_path.is_file() or preview_path.stat().st_size < 1000:
+                raise RuntimeError("Per-asset visual comparison is missing or too small: " + preview_file)
+            asset["preview_file"] = preview_file
+            review_images.append(preview_file)
+    finally:
+        for obj in renderable_asset_objects:
+            obj.hide_render = False
+        camera.location = original_camera_location
+        camera.rotation_euler = original_camera_rotation
+        scene.render.filepath = original_filepath
+
     manifest = {
         "generator": "Blendit Blender Asset Workshop",
-        "schema_version": 1,
+        "schema_version": 2,
         "blender_version": bpy.app.version_string,
         "assets": manifest_assets,
-        "outputs": ["blendit_asset_pack.blend", "blendit_asset_pack.glb", *individual_outputs, "preview.png"],
-        "notes": "Procedural starter pack; inspect assets and performance before production use.",
+        "outputs": ["blendit_asset_pack.blend", "blendit_asset_pack.glb", *individual_outputs, "preview.png", *review_images],
+        "visual_review": {
+            "combined_preview": "preview.png",
+            "per_asset_previews": review_images,
+            "status": "pending_human_phone_review",
+        },
+        "notes": "Procedural assets require technical, Godot, and human visual review before commercial approval.",
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     validate_outputs(output, manifest)
