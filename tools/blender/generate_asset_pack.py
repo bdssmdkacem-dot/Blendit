@@ -552,9 +552,41 @@ def main():
             for obj in scene.objects:
                 if obj.type in {"CAMERA", "LIGHT"} or obj.name == "Studio floor":
                     obj.hide_render = False
-            ox, oy, oz = asset["origin"]
-            camera.location = (ox + 4.8, oy - 7.0, oz + 4.2)
-            target = Vector((ox, oy, oz + 0.65))
+            # Frame each asset from its actual world-space bounds. A fixed camera
+            # offset clips long pieces (for example the carriage shafts) and makes
+            # smaller props look inconsistent in the phone-review images.
+            bpy.context.view_layer.update()
+            corners = [
+                obj.matrix_world @ Vector(corner)
+                for obj in asset_objects
+                if obj.type == "MESH"
+                for corner in obj.bound_box
+            ]
+            if not corners:
+                raise RuntimeError("Asset has no renderable mesh bounds: " + asset["name"])
+            minimum = Vector((
+                min(point.x for point in corners),
+                min(point.y for point in corners),
+                min(point.z for point in corners),
+            ))
+            maximum = Vector((
+                max(point.x for point in corners),
+                max(point.y for point in corners),
+                max(point.z for point in corners),
+            ))
+            target = (minimum + maximum) * 0.5
+            radius = max((point - target).length for point in corners)
+            if radius <= 0.001:
+                raise RuntimeError("Asset bounds are degenerate: " + asset["name"])
+
+            view_direction = Vector((4.8, -7.0, 4.2)).normalized()
+            sensor_width = max(camera.data.sensor_width, 1.0)
+            aspect = scene.render.resolution_x / max(scene.render.resolution_y, 1)
+            horizontal_fov = 2.0 * __import__("math").atan(sensor_width / (2.0 * camera.data.lens))
+            vertical_fov = 2.0 * __import__("math").atan((sensor_width / aspect) / (2.0 * camera.data.lens))
+            limiting_fov = min(horizontal_fov, vertical_fov)
+            distance = radius / max(__import__("math").sin(limiting_fov * 0.5), 0.01) * 1.18
+            camera.location = target + view_direction * distance
             camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
             scene.render.filepath = str(output / ("preview_" + asset["name"].lower() + ".png"))
             bpy.ops.render.render(write_still=True)
