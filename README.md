@@ -32,7 +32,8 @@ Outputs include:
 - `build/assets/blendit_asset_pack.blend` — editable master scene
 - `build/assets/blendit_asset_pack.glb` — combined GLB pack
 - `build/assets/crate.glb`, `lantern.glb`, `crystal.glb`, `barrel.glb`, `carriage.glb`, `rock_cluster.glb`, `pine_tree.glb`, `stone_wall.glb`, `bridge_segment.glb` — standalone assets
-- `build/assets/preview.png` — rendered contact-sheet-style scene preview
+- `build/assets/preview.png` — rendered Blender contact-sheet-style scene preview
+- `build/assets/godot-playtest.png` — actual Godot 4 scene render with imported GLBs, game-style lighting, ground, and collision proxies
 - `build/assets/manifest.json` — asset inventory and generator metadata
 - `build/assets/asset_quality_report.json` — per-asset mesh/primitive/triangle/material counts from the technical GLB audit
 
