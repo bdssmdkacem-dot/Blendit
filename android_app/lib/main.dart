@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -73,6 +74,8 @@ class _WorkshopHomeState extends State<WorkshopHome> {
   bool _busy = false;
   bool _connected = false;
   Timer? _pollTimer;
+  final ImagePicker _imagePicker = ImagePicker();
+  XFile? _sourceImage;
 
   String get _baseUrl => _hostController.text.trim().replaceAll(RegExp(r'/+$'), '');
   Map<String, String> get _headers => {
@@ -210,12 +213,38 @@ class _WorkshopHomeState extends State<WorkshopHome> {
     }
   }
 
+  Future<void> _pickSourceImage() async {
+    try {
+      final image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 92,
+        maxWidth: 2048,
+        maxHeight: 2048,
+      );
+      if (image == null || !mounted) return;
+      final size = await File(image.path).length();
+      if (size > 20 * 1024 * 1024) {
+        setState(() => _status = 'الصورة أكبر من 20 ميغابايت. اختر صورة أصغر لتسهيل الرفع.');
+        return;
+      }
+      setState(() {
+        _sourceImage = image;
+        _status = 'تم اختيار الصورة. افتح TRELLIS.2 ثم اختر الصورة نفسها من معرض الهاتف لبدء التوليد.';
+      });
+    } catch (error) {
+      if (mounted) setState(() => _status = 'تعذّر اختيار الصورة: $error');
+    }
+  }
+
   Future<void> _openTrellis() async {
     final uri = Uri.parse('https://huggingface.co/spaces/microsoft/TRELLIS.2');
     try {
       final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!opened && mounted) {
+      if (!mounted) return;
+      if (!opened) {
         setState(() => _status = 'تعذّر فتح TRELLIS.2. تحقق من اتصال الإنترنت ثم أعد المحاولة.');
+      } else if (_sourceImage != null) {
+        setState(() => _status = 'فتحنا TRELLIS.2. لأسباب الخصوصية لا نرفع الصورة تلقائيًا؛ اختر الصورة المحددة يدويًا داخل صفحة الخدمة.');
       }
     } catch (error) {
       if (mounted) setState(() => _status = 'تعذّر فتح TRELLIS.2: $error');
@@ -365,17 +394,49 @@ class _WorkshopHomeState extends State<WorkshopHome> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'يفتح هذا الخيار واجهة TRELLIS.2 لإنشاء نموذج بخامات PBR ثم تصديره بصيغة GLB. '
-                    'استخدم صورة واضحة لجسم واحد، ويفضّل خلفية شفافة. التوليد يحتاج GPU على الخادم؛ '
-                    'التوفر المجاني والانتظار يعتمدان على الاستضافة.',
+                    'ابدأ باختيار صورة واضحة لجسم واحد. يمكنك معاينتها هنا، ثم فتح واجهة TRELLIS.2 واختيار الصورة نفسها من معرض الهاتف. '
+                    'لا يرفع Blendit الصورة تلقائيًا إلى جهة خارجية؛ التوليد يحتاج GPU على الخادم، وقد تختلف أوقات الانتظار والتوفر المجاني.',
                   ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _pickSourceImage,
+                    icon: const Icon(Icons.add_photo_alternate_outlined),
+                    label: Text(_sourceImage == null ? 'اختيار صورة من الهاتف' : 'تغيير الصورة المختارة'),
+                  ),
+                  if (_sourceImage != null) ...[
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        File(_sourceImage!.path),
+                        height: 220,
+                        width: double.infinity,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => const SizedBox(
+                          height: 80,
+                          child: Center(child: Text('تعذّرت معاينة الصورة المختارة')),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(_sourceImage!.name, maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: TextButton.icon(
+                        onPressed: () => setState(() => _sourceImage = null),
+                        icon: const Icon(Icons.close),
+                        label: const Text('إزالة الصورة'),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
                       onPressed: _openTrellis,
                       icon: const Icon(Icons.open_in_new),
-                      label: const Text('فتح TRELLIS.2 وتحويل الصورة'),
+                      label: const Text('فتح TRELLIS.2'),
                     ),
                   ),
                 ],
