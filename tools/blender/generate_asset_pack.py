@@ -276,20 +276,35 @@ def create_carriage_prop(origin, wood, mahogany, brass, velvet, dark_metal):
 def create_rock_cluster(origin, stone, highlight):
     x, y, z = origin
     parts = []
-    for dx, dy, dz, sx, sy, sz in [
-        (-0.28, 0.0, 0.26, 0.48, 0.42, 0.46),
-        (0.18, -0.04, 0.20, 0.40, 0.36, 0.34),
-        (0.02, 0.12, 0.49, 0.34, 0.32, 0.48),
-    ]:
-        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=1, location=(x + dx, y + dy, z + dz))
+    # A grounded, interlocking arrangement of irregular stones. Distorting the
+    # ico vertices creates real angular planes rather than smooth uniform blobs.
+    rocks = [
+        (-0.30, 0.00, 0.25, 0.48, 0.40, 0.38, 0.15),
+        (0.16, -0.035, 0.22, 0.42, 0.37, 0.32, 1.30),
+        (0.015, 0.11, 0.48, 0.34, 0.31, 0.43, 2.45),
+        (-0.16, 0.12, 0.19, 0.29, 0.31, 0.27, 3.10),
+        (0.31, 0.08, 0.16, 0.27, 0.30, 0.24, 4.25),
+    ]
+    for index, (dx, dy, dz, sx, sy, sz, phase) in enumerate(rocks):
+        bpy.ops.mesh.primitive_ico_sphere_add(
+            subdivisions=1, radius=1,
+            location=(x + dx, y + dy, z + dz),
+        )
         obj = bpy.context.object
-        obj.name = "Rock cluster | low-poly stone"
+        obj.name = "Rock cluster | fractured angular stone %02d" % (index + 1)
         obj.scale = (sx, sy, sz)
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-        assign(obj, stone if dz < 0.4 else highlight)
+        for vertex_index, vertex in enumerate(obj.data.vertices):
+            co = vertex.co
+            # Deterministic vertex displacement preserves reproducible builds.
+            wave = 0.84 + 0.16 * sin(vertex_index * 2.31 + phase)
+            co.x *= wave
+            co.y *= 0.88 + 0.12 * cos(vertex_index * 1.73 + phase)
+            co.z *= 0.90 + 0.10 * sin(vertex_index * 1.91 + phase * 0.7)
+        obj.data.update()
+        assign(obj, stone if index in (0, 1, 3) else highlight)
         parts.append(obj)
     return parts
-
 
 def create_pine_tree(origin, bark, foliage):
     x, y, z = origin
