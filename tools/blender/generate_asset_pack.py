@@ -7,7 +7,7 @@ import argparse
 import json
 import sys
 import struct
-from math import atan, radians, sin
+from math import atan, radians, sin, cos
 from mathutils import Vector
 from pathlib import Path
 
@@ -293,49 +293,77 @@ def create_rock_cluster(origin, stone, highlight):
 
 def create_pine_tree(origin, bark, foliage):
     x, y, z = origin
-    parts = [cylinder("Pine tree | trunk", (x, y, z + 0.72), 0.13, 1.44, bark, vertices=8)]
+    parts = [cylinder("Pine tree | trunk", (x, y, z + 0.78), 0.13, 1.56, bark, vertices=8)]
 
-    # Break the repetitive stacked-cone silhouette with alternating branch
-    # tiers, varied radii, and slight offsets/leans while keeping a clean
-    # low-poly evergreen silhouette for real-time game use.
-    crown_tiers = [
-        (-0.04, 0.00, 0.66, 0.67, 1.02, 0.08, -0.05),
-        (0.08, -0.015, 1.00, 0.59, 0.92, -0.06, 0.04),
-        (-0.055, 0.025, 1.34, 0.49, 0.82, 0.05, 0.07),
-        (0.035, -0.025, 1.66, 0.38, 0.72, -0.04, -0.06),
-        (0.00, 0.00, 1.98, 0.25, 0.62, 0.02, 0.01),
+    # Build overlapping leaf-like boughs as tapered, slightly drooping low-poly
+    # meshes. This avoids the visibly stacked-cone silhouette and reads better
+    # from front, side, and oblique gameplay cameras.
+    def make_bough(name, angle, height, length, width, droop):
+        radial = Vector((cos(angle), sin(angle), 0.0))
+        tangent = Vector((-sin(angle), cos(angle), 0.0))
+        profile = [
+            (0.08, 0.00, 0.035),
+            (length * 0.24, 0.07, width * 0.52),
+            (length * 0.53, 0.025, width),
+            (length * 0.78, -droop * 0.48, width * 0.57),
+            (length, -droop, 0.012),
+            (length * 0.57, -droop * 0.76, -width * 0.52),
+            (length * 0.25, -droop * 0.34, -width * 0.40),
+        ]
+        thickness = 0.035
+        verts = []
+        for side in (-1.0, 1.0):
+            for distance, dz, spread in profile:
+                p = Vector((x, y, z + height + dz)) + radial * distance + tangent * (spread + side * thickness)
+                verts.append(tuple(p))
+        count = len(profile)
+        faces = []
+        faces.append(tuple(range(count)))
+        faces.append(tuple(range(count, count * 2)))
+        for i in range(count):
+            nxt = (i + 1) % count
+            faces.append((i, nxt, nxt + count, i + count))
+        mesh = bpy.data.meshes.new(name + " mesh")
+        mesh.from_pydata(verts, [], faces)
+        mesh.materials.append(foliage)
+        mesh.update()
+        obj = bpy.data.objects.new(name, mesh)
+        bpy.context.collection.objects.link(obj)
+        parts.append(obj)
+
+    tier_data = [
+        (0.48, 0.78, 0.32, 0.20),
+        (0.72, 0.76, 0.30, 0.19),
+        (0.96, 0.66, 0.27, 0.17),
+        (1.20, 0.57, 0.24, 0.15),
+        (1.43, 0.47, 0.21, 0.13),
+        (1.64, 0.37, 0.18, 0.11),
+        (1.83, 0.28, 0.15, 0.09),
+        (2.00, 0.19, 0.12, 0.07),
     ]
-    for index, (dx, dy, height, radius, depth, lean_x, lean_y) in enumerate(crown_tiers):
-        bpy.ops.mesh.primitive_cone_add(
-            vertices=9 if index < 3 else 8,
-            radius1=radius, radius2=0.025, depth=depth,
-            location=(x + dx, y + dy, z + height),
-            rotation=(lean_x, lean_y, 0.0),
-        )
-        crown = bpy.context.object
-        crown.name = "Pine tree | irregular evergreen tier %02d" % (index + 1)
-        assign(crown, foliage)
-        parts.append(crown)
+    for tier, (height, length, width, droop) in enumerate(tier_data):
+        count = 9 if tier < 4 else 8
+        phase = tier * 0.37
+        for index in range(count):
+            angle = (2.0 * 3.141592653589793 * index / count) + phase
+            # Slight tier-to-tier length variation prevents a perfect radial ring.
+            variation = 0.91 + 0.09 * sin(index * 2.17 + tier * 1.31)
+            make_bough(
+                "Pine tree | layered leaf bough %02d-%02d" % (tier + 1, index + 1),
+                angle, height + 0.025 * sin(index * 1.7 + tier),
+                length * variation, width * variation, droop,
+            )
 
-    # Short angular boughs emerge around the lower trunk to add readable
-    # branch structure from oblique and side views instead of a bare cone stack.
-    for index, angle in enumerate((0.0, 1.25, 2.5, 3.75, 5.0)):
-        height = 0.54 + (index % 2) * 0.13
-        length = 0.48 if index % 2 == 0 else 0.40
-        bpy.ops.mesh.primitive_cone_add(
-            vertices=7, radius1=0.14, radius2=0.018, depth=length,
-            location=(x + __import__("math").sin(angle) * 0.24,
-                      y + __import__("math").cos(angle) * 0.24,
-                      z + height),
-            rotation=(0.50 * __import__("math").cos(angle),
-                      0.50 * __import__("math").sin(angle), angle),
-        )
-        branch = bpy.context.object
-        branch.name = "Pine tree | lower bough %02d" % (index + 1)
-        assign(branch, foliage)
-        parts.append(branch)
+    # A narrow terminal leader completes the natural conifer crown.
+    bpy.ops.mesh.primitive_cone_add(
+        vertices=7, radius1=0.13, radius2=0.008, depth=0.34,
+        location=(x, y, z + 2.12),
+    )
+    leader = bpy.context.object
+    leader.name = "Pine tree | terminal leader"
+    assign(leader, foliage)
+    parts.append(leader)
     return parts
-
 
 def create_stone_wall(origin, stone, trim):
     x, y, z = origin
