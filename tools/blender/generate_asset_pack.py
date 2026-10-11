@@ -128,13 +128,39 @@ def create_lantern(origin, brass, dark, glow):
 
 def create_crystal(origin, crystal_mat, dark):
     x, y, z = origin
-    bpy.ops.mesh.primitive_cone_add(vertices=6, radius1=0.34, radius2=0.02, depth=1.1, location=(x, y, z + 0.65))
-    obj = bpy.context.object
-    obj.name = "Crystal | faceted shard"
-    assign(obj, crystal_mat)
-    bevel(obj, 0.015, 1)
-    cylinder("Crystal | stone base", (x, y, z + 0.08), 0.4, 0.16, dark, vertices=8)
-    return [obj]
+    parts = []
+
+    # A clustered geode silhouette reads more clearly at gameplay distance
+    # than a single cone. The center shard is tallest; two shorter crystals
+    # lean outward and two small points fill the base without hiding the facets.
+    shards = [
+        (0.00, 0.00, 0.78, 0.34, 1.30, (0.00, 0.00, 0.00)),
+        (-0.27, -0.015, 0.48, 0.22, 0.86, (0.00, -0.18, -0.12)),
+        (0.26, 0.035, 0.43, 0.21, 0.78, (0.00, 0.16, 0.14)),
+        (-0.12, 0.18, 0.29, 0.15, 0.52, (0.08, -0.10, -0.08)),
+        (0.16, -0.16, 0.27, 0.14, 0.48, (-0.08, 0.12, 0.10)),
+    ]
+    for index, (dx, dy, height, radius, depth, rotation) in enumerate(shards):
+        bpy.ops.mesh.primitive_cone_add(
+            vertices=6 if index < 3 else 5,
+            radius1=radius, radius2=0.012, depth=depth,
+            location=(x + dx, y + dy, z + height),
+            rotation=rotation,
+        )
+        shard = bpy.context.object
+        shard.name = "Crystal | faceted shard %02d" % (index + 1)
+        assign(shard, crystal_mat)
+        bevel(shard, 0.012, 1)
+        parts.append(shard)
+
+    cylinder("Crystal | stone base", (x, y, z + 0.08), 0.43, 0.16, dark, vertices=8)
+    # Small dark-metal setting pins visually anchor the crystal cluster to its base.
+    for dx, dy in ((-0.28, 0.0), (0.28, 0.0), (0.0, -0.27), (0.0, 0.27)):
+        parts.append(cylinder(
+            "Crystal | base setting", (x + dx, y + dy, z + 0.17),
+            0.035, 0.07, dark, vertices=8
+        ))
+    return parts
 
 
 def create_barrel(origin, wood, trim):
