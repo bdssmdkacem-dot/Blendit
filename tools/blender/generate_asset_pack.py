@@ -293,16 +293,47 @@ def create_rock_cluster(origin, stone, highlight):
 
 def create_pine_tree(origin, bark, foliage):
     x, y, z = origin
-    parts = [cylinder("Pine tree | trunk", (x, y, z + 0.62), 0.13, 1.24, bark, vertices=8)]
-    for height, radius in ((0.72, 0.62), (1.18, 0.49), (1.58, 0.34)):
+    parts = [cylinder("Pine tree | trunk", (x, y, z + 0.72), 0.13, 1.44, bark, vertices=8)]
+
+    # Break the repetitive stacked-cone silhouette with alternating branch
+    # tiers, varied radii, and slight offsets/leans while keeping a clean
+    # low-poly evergreen silhouette for real-time game use.
+    crown_tiers = [
+        (-0.04, 0.00, 0.66, 0.67, 1.02, 0.08, -0.05),
+        (0.08, -0.015, 1.00, 0.59, 0.92, -0.06, 0.04),
+        (-0.055, 0.025, 1.34, 0.49, 0.82, 0.05, 0.07),
+        (0.035, -0.025, 1.66, 0.38, 0.72, -0.04, -0.06),
+        (0.00, 0.00, 1.98, 0.25, 0.62, 0.02, 0.01),
+    ]
+    for index, (dx, dy, height, radius, depth, lean_x, lean_y) in enumerate(crown_tiers):
         bpy.ops.mesh.primitive_cone_add(
-            vertices=8, radius1=radius, radius2=0.035, depth=0.9,
-            location=(x, y, z + height)
+            vertices=9 if index < 3 else 8,
+            radius1=radius, radius2=0.025, depth=depth,
+            location=(x + dx, y + dy, z + height),
+            rotation=(lean_x, lean_y, 0.0),
         )
         crown = bpy.context.object
-        crown.name = "Pine tree | evergreen crown"
+        crown.name = "Pine tree | irregular evergreen tier %02d" % (index + 1)
         assign(crown, foliage)
         parts.append(crown)
+
+    # Short angular boughs emerge around the lower trunk to add readable
+    # branch structure from oblique and side views instead of a bare cone stack.
+    for index, angle in enumerate((0.0, 1.25, 2.5, 3.75, 5.0)):
+        height = 0.54 + (index % 2) * 0.13
+        length = 0.48 if index % 2 == 0 else 0.40
+        bpy.ops.mesh.primitive_cone_add(
+            vertices=7, radius1=0.14, radius2=0.018, depth=length,
+            location=(x + __import__("math").sin(angle) * 0.24,
+                      y + __import__("math").cos(angle) * 0.24,
+                      z + height),
+            rotation=(0.50 * __import__("math").cos(angle),
+                      0.50 * __import__("math").sin(angle), angle),
+        )
+        branch = bpy.context.object
+        branch.name = "Pine tree | lower bough %02d" % (index + 1)
+        assign(branch, foliage)
+        parts.append(branch)
     return parts
 
 
