@@ -534,7 +534,17 @@ def main():
     brass = material("Metal | aged brass", palette["brass"], metallic=0.72, roughness=0.28)
     dark_metal = material("Metal | blackened iron", (0.055, 0.065, 0.07), metallic=0.55, roughness=0.4)
     velvet = material("Fabric | velvet accent", palette["velvet"], roughness=0.82)
-    crystal_mat = material("Magic | faceted crystal", palette["crystal"], metallic=0.18, roughness=0.22)
+    crystal_mat = material("Magic | faceted crystal", palette["crystal"], metallic=0.08, roughness=0.16)
+    # Keep the crystal readable as a gem in Blender and preserve transmission
+    # metadata for real-time engines that support transmissive glTF materials.
+    crystal_bsdf = crystal_mat.node_tree.nodes.get("Principled BSDF")
+    if crystal_bsdf:
+        if "Transmission Weight" in crystal_bsdf.inputs:
+            crystal_bsdf.inputs["Transmission Weight"].default_value = 0.28
+        elif "Transmission" in crystal_bsdf.inputs:
+            crystal_bsdf.inputs["Transmission"].default_value = 0.28
+        if "IOR" in crystal_bsdf.inputs:
+            crystal_bsdf.inputs["IOR"].default_value = 1.46
     glow = material("Light | luminous glass", palette["glow"], roughness=0.2)
     stone = material("Stone | base", palette["stone"], roughness=0.88)
     stone_highlight = material("Stone | cool highlight", palette["highlight"], roughness=0.82)
