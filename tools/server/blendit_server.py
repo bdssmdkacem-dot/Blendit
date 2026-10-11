@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 import struct
 import subprocess
@@ -39,6 +40,30 @@ ALLOWED_FILES = {
 }
 
 
+def is_preview_name(name: str) -> bool:
+    """Only allow generated per-asset preview PNG names, never arbitrary paths."""
+    return bool(re.fullmatch(r"preview_[a-z0-9_]+\.png", name))
+
+
+def manifest_output_names(output: Path) -> set[str]:
+    try:
+        manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return set()
+    names = manifest.get("outputs", [])
+    if not isinstance(names, list):
+        return set()
+    return {name for name in names if isinstance(name, str) and Path(name).name == name}
+
+
+def is_download_allowed(name: str, output: Path = OUTPUT) -> bool:
+    if Path(name).name != name:
+        return False
+    if name in ALLOWED_FILES:
+        return True
+    return is_preview_name(name) and name in manifest_output_names(output)
+
+
 def now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -63,7 +88,7 @@ def validate_generated_pack(output: Path) -> None:
     if not isinstance(outputs, list) or not outputs:
         raise RuntimeError("Generated manifest has no output list")
     for name in outputs:
-        if not isinstance(name, str) or name not in ALLOWED_FILES:
+        if not isinstance(name, str) or Path(name).name != name or not (name in ALLOWED_FILES or is_preview_name(name)):
             raise RuntimeError("Manifest contains an unsupported output name")
         path = output / name
         if not path.is_file() or path.stat().st_size == 0:
@@ -169,15 +194,19 @@ class Handler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/api/assets":
             OUTPUT.mkdir(parents=True, exist_ok=True)
+            listed_names = set(ALLOWED_FILES) | {
+                name for name in manifest_output_names(OUTPUT) if is_preview_name(name)
+            }
             files = [{"name": name, "size": (OUTPUT / name).stat().st_size,
                       "url": "/api/download/" + name}
-                     for name in sorted(ALLOWED_FILES)
-                     if (OUTPUT / name).is_file() and (OUTPUT / name).stat().st_size > 0]
+                     for name in sorted(listed_names)
+                     if is_download_allowed(name, OUTPUT)
+                     and (OUTPUT / name).is_file() and (OUTPUT / name).stat().st_size > 0]
             self.send_json(200, {"assets": files, "preview_url": "/api/download/preview.png" if any(f["name"] == "preview.png" for f in files) else None})
             return
         if parsed.path.startswith("/api/download/"):
             name = unquote(parsed.path.rsplit("/", 1)[-1])
-            if name not in ALLOWED_FILES:
+            if not is_download_allowed(name, OUTPUT):
                 self.send_json(400, {"error": "File is not in the allowed asset list"})
                 return
             file_path = OUTPUT / name
