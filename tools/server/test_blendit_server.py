@@ -60,6 +60,29 @@ class BridgeApiTests(unittest.TestCase):
             self.request("/api/download/not-allowed.bin", token=bridge.TOKEN)
         self.assertEqual(caught.exception.code, 400)
 
+    def test_per_asset_preview_is_listed_and_downloadable_when_manifested(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            self._write_validatable_pack(output)
+            original_output = bridge.OUTPUT
+            bridge.OUTPUT = output
+            try:
+                with self.request("/api/assets", token=bridge.TOKEN) as response:
+                    names = {item["name"] for item in json.loads(response.read())["assets"]}
+                self.assertIn("preview_crystal.png", names)
+                with self.request("/api/download/preview_crystal.png", token=bridge.TOKEN) as response:
+                    self.assertEqual(response.read()[:8], bytes([137, 80, 78, 71, 13, 10, 26, 10]))
+            finally:
+                bridge.OUTPUT = original_output
+
+    def test_unlisted_per_asset_preview_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            (output / "manifest.json").write_text(json.dumps({"outputs": []}), encoding="utf-8")
+            (output / "preview_hidden.png").write_bytes(b"not listed")
+            self.assertFalse(bridge.is_download_allowed("preview_hidden.png", output))
+            self.assertFalse(bridge.is_download_allowed("../preview_hidden.png", output))
+
     def test_client_cannot_choose_arbitrary_generation_task(self):
         with self.assertRaises(HTTPError) as caught:
             self.request("/api/generate", token=bridge.TOKEN, method="POST",
@@ -93,8 +116,11 @@ class BridgeApiTests(unittest.TestCase):
     def _write_validatable_pack(self, output):
         for filename in bridge.ALLOWED_FILES:
             (output / filename).write_bytes(b"placeholder")
+        (output / "preview_crystal.png").write_bytes(
+            bytes([137, 80, 78, 71, 13, 10, 26, 10]) + b"preview"
+        )
         (output / "manifest.json").write_text(json.dumps({
-            "outputs": sorted(bridge.ALLOWED_FILES - {"manifest.json"})
+            "outputs": sorted((bridge.ALLOWED_FILES - {"manifest.json"}) | {"preview_crystal.png"})
         }), encoding="utf-8")
         (output / "blendit_asset_pack.glb").write_bytes(
             struct.pack("<4sII", b"glTF", 2, 12)
