@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "status": "reference_catalog_only_not_3d_likenesses",
+  "updated": "2026-10-13",
+  "global_acceptance": {
+    "require_reference_portrait_review": true,
+    "require_front_three_quarter_profile_renders": true,
+    "require_human_visual_approval": true,
+    "fictional_satire_disclosure_ar": "عمل ساخر خيالي — الشخصيات كاريكاتيرية والمواقف تمثيلية",
+    "do_not_infer_facial_features_without_reference": true
+  },
+  "profiles": [
+    {
+      "id": "ahmed_touizi",
+      "name_ar": "أحمد التويزي",
+      "name_latin": "Ahmed Touizi",
+      "priority": "P0",
+      "scene_role": "House of Representatives presiding figure",
+      "reference_page": "https://maroc.ma/ar/الأخبار/انتخاب-السيد-أحمد-التويزي-رئيسا-لمجلس-النواب",
+      "reference_status": "official_context_page_found_portrait_still_needs_selection_and_review",
+      "portrait_credit": "Record photographer and usage terms before embedding portrait.",
+      "sculpt_status": "not_started",
+      "rig_status": "not_started",
+      "approval_status": "not_reviewed",
+      "notes": "Do not derive facial proportions from role/title. Use verified public portrait(s); preserve recognizability while exaggerating only as artistic caricature."
+    },
+    {
+      "id": "idriss_el_azami_el_idrissi",
+      "name_ar": "إدريس الأزمي الإدريسي",
+      "name_latin": "Idriss El Azami El Idrissi",
+      "priority": "P0",
+      "scene_role": "debate counterpart / opposition-style speaker",
+      "reference_page": "https://maroc.ma/ar/الأخبار/انتخاب-السيد-أحمد-التويزي-رئيسا-لمجلس-النواب",
+      "reference_status": "official_context_page_found_portrait_still_needs_selection_and_review",
+      "portrait_credit": "Record photographer and usage terms before embedding portrait.",
+      "sculpt_status": "not_started",
+      "rig_status": "not_started",
+      "approval_status": "not_reviewed",
+      "notes": "Distinct facial sculpt must be based on a verified public portrait; glasses, hair and facial details must not be guessed."
+    },
+    {
+      "id": "mohamed_ould_errachid",
+      "name_ar": "محمد ولد الرشيد",
+      "name_latin": "Mohamed Ould Errachid",
+      "priority": "P0-period-specific",
+      "scene_role": "House of Councillors presiding figure",
+      "reference_page": "https://www.maroc.ma/en/parlement",
+      "reference_status": "official_parliament_page_available_portrait_still_needs_selection_and_review",
+      "portrait_credit": "Record photographer and usage terms before embedding portrait.",
+      "sculpt_status": "not_started",
+      "rig_status": "not_started",
+      "approval_status": "not_reviewed",
+      "notes": "Use in a House of Councillors scene or a clearly dated period; do not mix chamber identities."
+    },
+    {
+      "id": "fatima_ezzahra_el_mansouri",
+      "name_ar": "فاطمة الزهراء المنصوري",
+      "name_latin": "Fatima Ezzahra El Mansouri",
+      "priority": "P1",
+      "scene_role": "female political leader / government scene",
+      "reference_page": "https://fatimazahraelmansouri.com/ar/press/",
+      "reference_status": "official_press_page_lists_campaign_portrait_check_credit_and_usage_terms",
+      "portrait_credit": "Official press page requires name credit; verify the exact terms before redistributing the portrait.",
+      "sculpt_status": "not_started",
+      "rig_status": "not_started",
+      "approval_status": "not_reviewed",
+      "notes": "Create a dedicated female body/head base and hair silhouette from the reference; do not adapt the generic male body by swapping only the head."
+    }
+  ]
+}
