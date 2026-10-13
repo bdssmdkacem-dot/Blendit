@@ -1,0 +1,65 @@
+name: Generate Fictional Parliament Satire Characters
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/blender/generate_parliament_satire_characters.py"
+      - ".github/workflows/generate-parliament-satire-characters.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  generate-character-cast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+
+      - name: Generate fictional cast
+        run: |
+          blender --background --factory-startup --python tools/blender/generate_parliament_satire_characters.py -- --output-dir build/parliament-characters --samples 8
+
+      - name: Validate character assets and visual evidence
+        run: |
+          python3 - <<'PY'
+          import json, struct
+          from pathlib import Path
+          out = Path("build/parliament-characters")
+          manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+          assert len(manifest["characters"]) == 6, "Expected six fictional archetypes"
+          assert "not likenesses of real people" in manifest["usage_note"]
+          for item in manifest["characters"]:
+              for field in ("file", "preview"):
+                  p = out / item[field]
+                  assert p.is_file() and p.stat().st_size > 0, f"Missing/empty {p.name}"
+              raw = (out / item["file"]).read_bytes()
+              magic, version, length = struct.unpack("<4sII", raw[:12])
+              assert magic == b"glTF" and version == 2 and length == len(raw), item["file"]
+              json_length, chunk_type = struct.unpack("<I4s", raw[12:20])
+              assert chunk_type == b"JSON" and 20 + json_length <= len(raw), item["file"]
+              gltf = json.loads(raw[20:20+json_length].decode("utf-8").rstrip(" \\t\\r\\n\\0"))
+              assert len(gltf.get("nodes", [])) >= 35, f"Too few character parts: {item['file']}"
+              assert len(gltf.get("materials", [])) >= 5, f"Too few materials: {item['file']}"
+              preview = (out / item["preview"]).read_bytes()
+              assert preview[:8] == bytes([137,80,78,71,13,10,26,10]), item["preview"]
+              width, height = struct.unpack(">II", preview[16:24])
+              assert width >= 1000 and height >= 700, item["preview"]
+              print(f"{item['id']}: {len(gltf.get('nodes', []))} nodes, {len(gltf.get('materials', []))} materials, preview {width}x{height}")
+          print("Validated six GLBs, material variety, and six rendered PNG previews.")
+          PY
+
+      - name: Upload cast and preview evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: fictional-parliament-satire-characters
+          path: build/parliament-characters/
+          if-no-files-found: error
+          retention-days: 14
