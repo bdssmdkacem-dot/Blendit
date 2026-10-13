@@ -6,6 +6,8 @@ on:
     paths:
       - "tools/blender/generate_parliament_satire_characters.py"
       - ".github/workflows/generate-parliament-satire-characters.yml"
+      - "data/parliament/real_figure_profiles.json"
+      - "docs/parliament-real-figure-caricature-roster.md"
 
 permissions:
   contents: read
@@ -22,6 +24,26 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y blender
+
+      - name: Validate named-figure reference catalog
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("data/parliament/real_figure_profiles.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+          assert data["status"] == "reference_catalog_only_not_3d_likenesses"
+          assert data["global_acceptance"]["require_human_visual_approval"] is True
+          profiles = data["profiles"]
+          assert len(profiles) >= 4
+          ids = [x["id"] for x in profiles]
+          assert len(ids) == len(set(ids)), "Duplicate profile IDs"
+          for item in profiles:
+              for key in ("id", "name_ar", "name_latin", "priority", "reference_page", "reference_status", "sculpt_status", "approval_status"):
+                  assert item.get(key), f"{item.get('id', 'unknown')}: missing {key}"
+              assert item["sculpt_status"] == "not_started" or item["approval_status"] != "not_reviewed", "Cannot mark sculpt complete without review status"
+          print(f"Validated {len(profiles)} source-tracked named-figure profiles; no likeness is falsely marked approved.")
+          PY
 
       - name: Generate fictional cast
         run: |
