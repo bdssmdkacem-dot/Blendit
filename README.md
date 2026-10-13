@@ -94,3 +94,21 @@ Do not expose port 8765 to the public internet or use this plain-HTTP bridge on 
 - CI runs bridge API safety tests, Flutter analysis/widget tests, and builds a debug APK artifact. A green workflow is required before calling that build verified.
 - The current workflow generates Android platform scaffolding during CI; run `flutter create --platforms=android --project-name blendit_mobile --org com.blendit .` from `android_app/`, then run `python tool/prepare_android.py` there before building locally for the first time. The helper enables cleartext HTTP for the private-LAN bridge; do not expose this development setup to the public internet.
 
+## Moroccan Parliament architecture pack
+
+A separate procedural Blender generator now creates a reference-led exterior building asset and an interior domed plenary-chamber asset. It is an architectural interpretation for prototyping, not a survey-accurate replica; compare against licensed/current references before claiming exact fidelity.
+
+### Generate locally
+
+```bash
+blender --background --factory-startup --python tools/blender/generate_parliament_pack.py -- --output-dir build/parliament --samples 32
+```
+
+Outputs:
+- `build/parliament/moroccan_parliament_master.blend` — editable combined scene
+- `build/parliament/parliament_exterior.glb` — exterior building, entrance, forecourt and landscaping
+- `build/parliament/parliament_domed_chamber.glb` — circular plenary room, dome, radial ribs, seating, desks, microphones, dais and lighting
+- `build/parliament/preview_exterior.png` and `preview_interior.png` — rendered review images
+- `build/parliament/manifest.json` — output inventory and review status
+
+GitHub Actions → **Generate Moroccan Parliament Architecture Pack** runs the generator and validates output existence, GLB headers and PNG signatures, then uploads an artifact. These checks do not replace visual review or import testing in Godot. The Android bridge currently runs only the starter pack; this custom generator is run locally or through its dedicated workflow, not yet through the phone app.
