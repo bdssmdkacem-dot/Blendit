@@ -148,7 +148,7 @@ class BridgeApiTests(unittest.TestCase):
             output = Path(directory)
             self._write_validatable_pack(output)
             (output / "preview_crystal.png").write_bytes(b"broken preview")
-            with self.assertRaisesRegex(RuntimeError, "PNG signature: preview_crystal.png"):
+            with self.assertRaisesRegex(RuntimeError, "Preview PNG signature is invalid: preview_crystal.png"):
                 bridge.validate_generated_pack(output)
 
     def test_generated_pack_validation_rejects_duplicate_manifest_outputs(self):
@@ -174,7 +174,7 @@ class BridgeApiTests(unittest.TestCase):
             (output / "manifest.json").write_text(json.dumps({
                 "outputs": sorted(bridge.ALLOWED_FILES - {"manifest.json"})
             }), encoding="utf-8")
-            (output / "preview.png").write_bytes(b"\\x89PNG\\r\\n\\x1a\\nrest")
+            (output / "preview.png").write_bytes(bytes([137, 80, 78, 71, 13, 10, 26, 10]) + b"rest")
             (output / "blendit_asset_pack.glb").write_bytes(
                 struct.pack("<4sII", b"NOPE", 2, 12)
             )
