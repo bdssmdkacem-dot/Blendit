@@ -143,6 +143,24 @@ class BridgeApiTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "PNG signature"):
                 bridge.validate_generated_pack(output)
 
+    def test_generated_pack_validation_rejects_invalid_individual_preview(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            self._write_validatable_pack(output)
+            (output / "preview_crystal.png").write_bytes(b"broken preview")
+            with self.assertRaisesRegex(RuntimeError, "PNG signature: preview_crystal.png"):
+                bridge.validate_generated_pack(output)
+
+    def test_generated_pack_validation_rejects_duplicate_manifest_outputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            self._write_validatable_pack(output)
+            manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
+            manifest["outputs"].append("preview_crystal.png")
+            (output / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "duplicate output names"):
+                bridge.validate_generated_pack(output)
+
     def test_generated_pack_validation_rejects_missing_files(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaisesRegex(RuntimeError, "incomplete"):
