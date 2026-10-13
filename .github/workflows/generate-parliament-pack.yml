@@ -1,0 +1,64 @@
+name: Generate Moroccan Parliament Architecture Pack
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/blender/generate_parliament_pack.py"
+      - ".github/workflows/generate-parliament-pack.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  generate-parliament-pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+
+      - name: Generate exterior and domed chamber
+        run: |
+          blender --background --factory-startup --python tools/blender/generate_parliament_pack.py -- --output-dir build/parliament --samples 16
+
+      - name: Validate generated outputs
+        run: |
+          python3 - <<'PY'
+          import json, struct
+          from pathlib import Path
+          out = Path("build/parliament")
+          manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+          expected = {
+              "moroccan_parliament_master.blend",
+              "parliament_exterior.glb",
+              "parliament_domed_chamber.glb",
+              "preview_exterior.png",
+              "preview_interior.png",
+          }
+          assert set(manifest["outputs"]) == expected, manifest["outputs"]
+          for name in expected:
+              p = out / name
+              assert p.is_file() and p.stat().st_size > 0, f"Missing/empty output: {name}"
+          for name in ("parliament_exterior.glb", "parliament_domed_chamber.glb"):
+              p = out / name
+              with p.open("rb") as f:
+                  magic, version, declared_length = struct.unpack("<4sII", f.read(12))
+              assert magic == b"glTF" and version == 2 and declared_length == p.stat().st_size, name
+          for name in ("preview_exterior.png", "preview_interior.png"):
+              assert (out / name).read_bytes()[:8] == bytes([137, 80, 78, 71, 13, 10, 26, 10]), name
+          print("Validated manifest, BLEND, both GLB headers, and both PNG previews.")
+          PY
+
+      - name: Upload parliament pack and visual previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: moroccan-parliament-architecture
+          path: build/parliament/
+          if-no-files-found: error
+          retention-days: 14
