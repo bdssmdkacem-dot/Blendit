@@ -369,14 +369,25 @@ def main():
     interior = build_interior(m)
     setup_render(out, opt.samples)
     scene = bpy.context.scene
-    # Render exterior beauty preview.
+    # Render each preview with only its intended architectural set visible.
+    # Both sets share a local origin for modular exports; leaving both visible
+    # would cause the interior dome/seating to contaminate the exterior preview.
     scene.camera = bpy.data.objects.get("Camera | exterior hero")
+    for obj in interior:
+        obj.hide_render = True
     scene.render.filepath = str(out / "preview_exterior.png")
     bpy.ops.render.render(write_still=True)
+    for obj in interior:
+        obj.hide_render = False
+
     # Render the interior from a low central position toward the dais and dome.
     scene.camera = camera("Camera | interior hero", (0, 5.0, 3.2), (0, -4.2, 9.0), 25)
+    for obj in exterior:
+        obj.hide_render = True
     scene.render.filepath = str(out / "preview_interior.png")
     bpy.ops.render.render(write_still=True)
+    for obj in exterior:
+        obj.hide_render = False
 
     # Export each architectural set independently, excluding studio cameras/lights.
     export_glb(out / "parliament_exterior.glb", exterior)
