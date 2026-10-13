@@ -112,3 +112,18 @@ Outputs:
 - `build/parliament/manifest.json` — output inventory and review status
 
 GitHub Actions → **Generate Moroccan Parliament Architecture Pack** runs the generator and validates output existence, GLB headers and PNG signatures, then uploads an artifact. These checks do not replace visual review or import testing in Godot. The Android bridge currently runs only the starter pack; this custom generator is run locally or through its dedicated workflow, not yet through the phone app.
+
+## Fictional satirical parliament character cast
+
+The purpose of the parliament assets is now video production as well as environment prototyping. A separate generator creates six **fictional, anonymous caricature archetypes** to stage inside the domed chamber: an over-the-top orator, a phone-scroller, a sleepy member, a paper-shuffler, a defensive shrugger, and an opposition-style speaker. These are satire-ready placeholders, not portraits or claims about any real member. The first pass exports separate named character parts, GLBs, per-character rendered previews, and a manifest. It is **not yet armature-rigged**; body parts are separated to support a later rigging/animation pass.
+
+### Generate locally
+
+```bash
+blender --background --factory-startup --python tools/blender/generate_parliament_satire_characters.py -- --output-dir build/parliament-characters --samples 16
+```
+
+GitHub Actions → **Generate Fictional Parliament Satire Characters** creates the cast and checks each GLB structure, material variety, and rendered preview dimensions. Download the `fictional-parliament-satire-characters` artifact, inspect every preview, then import representative characters and the chamber into the target scene before accepting them. A passing technical check is not proof of visual quality. The Android companion app does not yet expose these custom generators.
+
+Suggested production sequence: establish the chamber as a reusable stage; review the six characters; add a verified rig and short reusable animation clips (speaking, listening, looking at a phone, dozing, shuffling papers, reacting); then build camera shots and edit the satirical scene. Keep invented dialogue/actions clearly fictional and avoid presenting caricatures as real-person likenesses.
+
