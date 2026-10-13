@@ -87,11 +87,12 @@ def validate_generated_pack(output: Path) -> None:
     outputs = manifest.get("outputs")
     if not isinstance(outputs, list) or not outputs:
         raise RuntimeError("Generated manifest has no output list")
-    if len(outputs) != len(set(outputs)):
-        raise RuntimeError("Manifest contains duplicate output names")
     for name in outputs:
         if not isinstance(name, str) or Path(name).name != name or not (name in ALLOWED_FILES or is_preview_name(name)):
             raise RuntimeError("Manifest contains an unsupported output name")
+    if len(outputs) != len(set(outputs)):
+        raise RuntimeError("Manifest contains duplicate output names")
+    for name in outputs:
         path = output / name
         if not path.is_file() or path.stat().st_size == 0:
             raise RuntimeError("Manifest output is missing or empty: " + name)
