@@ -55,7 +55,13 @@ def line(n,pts,m,r=.018):
 
 def build(args_value):
     out, refs = args_value
-    reference_files = [refs / n for n in ("idriss_el_azami_el_idrissi_front.jpg", "idriss_el_azami_el_idrissi_three_quarter.jpg", "idriss_el_azami_el_idrissi_profile.jpg", "idriss_el_azami_front.jpg")]
+    # Include every supported reference image in this character folder, including
+    # idriss_el_azami_el_idrissi_ref.jpg and any future additions.
+    supported_image_suffixes = {'.jpg', '.jpeg', '.png', '.webp'}
+    reference_files = sorted(
+        p for p in refs.iterdir()
+        if p.is_file() and p.suffix.lower() in supported_image_suffixes
+    )
     available_refs = [p for p in reference_files if p.is_file() and p.stat().st_size > 1000]
     if not available_refs:
         raise RuntimeError(f"No repository character design references found in {refs}")
@@ -91,20 +97,6 @@ def build(args_value):
     pupil=mat("Eyes | pupil",(.012,.009,.008),.2)
     mouth=mat("Mouth | dark muted rose",(.19,.065,.055),.6)
     stubble=mat("Facial hair | charcoal grey",(.16,.15,.14),.85)
-    # Load repository design sheets as hidden, non-rendering references in the .blend.
-    # Do not pack or copy them into generated outputs; they remain source-controlled files.
-    ref_collection = bpy.data.collections.new("REFERENCE SHEETS | repository only")
-    bpy.context.scene.collection.children.link(ref_collection)
-    for ref_path in available_refs:
-        img = bpy.data.images.load(str(ref_path.resolve()), check_existing=True)
-        obj = bpy.data.objects.new("REFERENCE | " + ref_path.name, None)
-        obj.empty_display_type = "IMAGE"
-        obj.data = img
-        obj.hide_render = True
-        obj.hide_viewport = True
-        obj["source_path"] = ref_path.as_posix()
-        obj["reference_role"] = "stylized design and wardrobe guide; not photographic identity proof"
-        ref_collection.objects.link(obj)
     # feet, trouser silhouette and bespoke suit torso
     for s in (-1,1):
         x=s*.235
