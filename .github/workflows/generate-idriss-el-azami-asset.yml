@@ -20,7 +20,7 @@ jobs:
       - name: Install Blender
         run: |
           sudo apt-get update
-          sudo apt-get install -y blender python3-numpy
+          sudo apt-get install -y blender python3-numpy libegl1 libgl1
       - name: Generate native Blender asset, GLB and actual renders
         run: |
           PYTHONPATH=/usr/lib/python3/dist-packages blender --background --factory-startup --python tools/blender/generate_idriss_el_azami_asset.py -- --output-dir build/idriss-el-azami
