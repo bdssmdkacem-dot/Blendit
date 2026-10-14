@@ -204,6 +204,9 @@ def render_setup(out, samples):
     s = bpy.context.scene
     s.render.engine = "CYCLES"
     s.cycles.samples = samples
+    # Ubuntu repository Blender may be built without OpenImageDenoiser.
+    # Disable denoising explicitly so headless renders remain portable.
+    s.cycles.use_denoising = False
     s.render.resolution_x, s.render.resolution_y = 1600, 1000
     s.render.resolution_percentage = 100
     s.render.image_settings.file_format = "PNG"
