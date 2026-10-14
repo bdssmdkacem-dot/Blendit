@@ -62,8 +62,8 @@ def build(args_value):
     # restrained, production-friendly palette based on the supplied design sheets
     skin=mat("Skin | warm olive beige",(0.53,.34,.23),.58)
     skin_hi=mat("Skin | warm highlights",(.66,.45,.32),.62)
-    hair=mat("Hair | silver charcoal",(.34,.35,.34),.78)
-    hair_hi=mat("Hair | silver strands",(.58,.59,.55),.72)
+    hair=mat("Hair | bald scalp shadow",(.53,.34,.23),.78)
+    hair_hi=mat("Skin | scalp highlight",(.66,.45,.32),.72)
     suit=mat("Suit | deep midnight navy",(.025,.055,.105),.36)
     lapel=mat("Lapel | navy satin",(.055,.09,.15),.28)
     shirt=mat("Shirt | ivory",(.86,.84,.77),.42)
@@ -217,7 +217,7 @@ def build(args_value):
             o.select_set(True)
     bpy.context.view_layer.objects.active=next((o for o in bpy.context.scene.objects if o.select_get()),None)
     bpy.ops.export_scene.gltf(filepath=str(out/"idriss_el_azami_reference_led.glb"),export_format="GLB",use_selection=True,export_apply=True)
-    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Official campaign portrait downloaded at build time; source image is not stored in repository or output artifact.","real_person_likeness_verified":False,"photo_source_verified":True,"photo_source_url":"https://elazami.com/assets/hero-azami.png","photo_reuse_rights_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"checks":{"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by the official campaign portrait downloaded at build time; photo is not committed to the repository.","Official campaign website used as the reference source. Photograph reuse rights are not verified; visual likeness and quality require human review.","Visual quality must be reviewed from the rendered PNGs before acceptance."]}
+    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Official campaign portrait downloaded at build time; source image is not stored in repository or output artifact.","real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":True,"photo_source_url":"https://elazami.com/assets/hero-azami.png","photo_reuse_rights_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"checks":{"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by the official campaign portrait downloaded at build time; photo is not committed to the repository.","Official campaign website used as the reference source. Photograph reuse rights are not verified; visual likeness and quality require human review.","Visual quality must be reviewed from the rendered PNGs before acceptance."]}
     (out/"manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print("ASSET_MANIFEST="+json.dumps(manifest))
 if __name__=="__main__":build(args())
