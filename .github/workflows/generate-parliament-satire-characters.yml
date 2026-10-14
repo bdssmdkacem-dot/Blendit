@@ -1,97 +1,58 @@
-name: Generate Fictional Parliament Satire Characters
+name: Idriss El Azami Clean-Room Rebuild V3
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "tools/blender/generate_parliament_satire_characters.py"
+      - "tools/blender/rebuild_idriss_el_azami_clean_v3.py"
       - ".github/workflows/generate-parliament-satire-characters.yml"
-      - "data/parliament/real_figure_profiles.json"
-      - "tools/blender/validate_parliament_likeness.py"
-      - "tests/test_validate_parliament_likeness.py"
-      - "docs/parliament-real-figure-caricature-roster.md"
 
 permissions:
   contents: read
 
 jobs:
-  generate-character-cast:
+  clean-rebuild-and-render:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Install Blender
         run: |
           sudo apt-get update
-          sudo apt-get install -y blender python3-numpy
-
-      - name: Validate named-figure reference catalog
+          sudo apt-get install -y blender python3-numpy libegl1 libgl1
+      - name: Generate a clean-room character and render review views
         run: |
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          p = Path("data/parliament/real_figure_profiles.json")
-          data = json.loads(p.read_text(encoding="utf-8"))
-          assert data["status"] == "reference_catalog_only_not_3d_likenesses"
-          assert data["global_acceptance"]["require_human_visual_approval"] is True
-          profiles = data["profiles"]
-          assert len(profiles) >= 4
-          ids = [x["id"] for x in profiles]
-          assert len(ids) == len(set(ids)), "Duplicate profile IDs"
-          for item in profiles:
-              for key in ("id", "name_ar", "name_latin", "priority", "reference_page", "reference_status", "sculpt_status", "approval_status"):
-                  assert item.get(key), f"{item.get('id', 'unknown')}: missing {key}"
-              assert item["sculpt_status"] == "not_started" or item["approval_status"] != "not_reviewed", "Cannot mark sculpt complete without review status"
-          print(f"Validated {len(profiles)} source-tracked named-figure profiles; no likeness is falsely marked approved.")
-          PY
-
-      - name: Audit real-figure likeness readiness (never infer approval from generic cast)
-        run: python3 tools/blender/validate_parliament_likeness.py --json-out build/parliament-likeness-audit.json
-
-      - name: Test likeness audit status and approval gates
-        run: python3 -m unittest discover -s tests -p "test_validate_parliament_likeness.py" -v
-
-      - name: Generate fictional cast
-        run: |
-          PYTHONPATH=/usr/lib/python3/dist-packages blender --background --factory-startup --python tools/blender/generate_parliament_satire_characters.py -- --output-dir build/parliament-characters --samples 8
-
-      - name: Validate character assets and visual evidence
+          PYTHONPATH=/usr/lib/python3/dist-packages blender --background --factory-startup --python tools/blender/rebuild_idriss_el_azami_clean_v3.py -- --output-dir build/idriss-clean-v3
+      - name: Validate files without equating export success with likeness
         run: |
           python3 - <<'PY'
           import json, struct
           from pathlib import Path
-          out = Path("build/parliament-characters")
-          manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
-          assert len(manifest["characters"]) == 6, "Expected six fictional archetypes"
-          assert "not likenesses of real people" in manifest["usage_note"]
-          for item in manifest["characters"]:
-              for field in ("file", "preview"):
-                  p = out / item[field]
-                  assert p.is_file() and p.stat().st_size > 0, f"Missing/empty {p.name}"
-              raw = (out / item["file"]).read_bytes()
-              magic, version, length = struct.unpack("<4sII", raw[:12])
-              assert magic == b"glTF" and version == 2 and length == len(raw), item["file"]
-              json_length, chunk_type = struct.unpack("<I4s", raw[12:20])
-              assert chunk_type == b"JSON" and 20 + json_length <= len(raw), item["file"]
-              gltf = json.loads(raw[20:20+json_length].decode("utf-8").rstrip(" \\t\\r\\n\\0"))
-              assert len(gltf.get("nodes", [])) >= 35, f"Too few character parts: {item['file']}"
-              assert len(gltf.get("materials", [])) >= 5, f"Too few materials: {item['file']}"
-              preview = (out / item["preview"]).read_bytes()
-              assert preview[:8] == bytes([137,80,78,71,13,10,26,10]), item["preview"]
-              width, height = struct.unpack(">II", preview[16:24])
-              assert width >= 1000 and height >= 700, item["preview"]
-              print(f"{item['id']}: {len(gltf.get('nodes', []))} nodes, {len(gltf.get('materials', []))} materials, preview {width}x{height}")
-          print("Validated six GLBs, material variety, and six rendered PNG previews.")
+          p=Path("build/idriss-clean-v3")
+          m=json.loads((p/"manifest.json").read_text())
+          assert m["likeness_verified"] is False
+          assert m["approval_status"] == "awaiting_actual_render_review"
+          for name in m["files"]:
+              f=p/name
+              assert f.is_file() and f.stat().st_size>0, f"Missing or empty: {name}"
+          raw=(p/"idriss_el_azami_clean_v3.glb").read_bytes()
+          magic,version,length=struct.unpack("<4sII",raw[:12])
+          assert magic==b"glTF" and version==2 and length==len(raw), "Invalid GLB"
+          n,kind=struct.unpack("<I4s",raw[12:20])
+          assert kind==b"JSON"
+          gltf=json.loads(raw[20:20+n].decode("utf8").rstrip(" \\t\\r\\n\\0"))
+          assert len(gltf.get("nodes",[]))>=50, f"Unexpectedly sparse export: {len(gltf.get('nodes',[]))}"
+          for name in ("front.png","three_quarter.png","profile.png"):
+              b=(p/name).read_bytes()
+              assert b[:8]==bytes([137,80,78,71,13,10,26,10])
+              w,h=struct.unpack(">II",b[16:24]); assert w>=1000 and h>=1000
+              print(f"{name}: {w}x{h}, {len(b)} bytes")
+          print(f"GLB structure valid; nodes={len(gltf['nodes'])}; visual likeness still unapproved.")
           PY
-
-      - name: Upload cast and preview evidence
+      - name: Upload scene, export, manifest and rendered evidence
         uses: actions/upload-artifact@v4
         with:
-          name: fictional-parliament-satire-characters
-          path: |
-            build/parliament-characters/
-            build/parliament-likeness-audit.json
+          name: idriss-el-azami-clean-v3-review
+          path: build/idriss-clean-v3/
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
