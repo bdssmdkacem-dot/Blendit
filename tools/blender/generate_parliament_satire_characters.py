@@ -16,11 +16,15 @@ from mathutils import Vector
 
 def parse_args():
     argv = sys.argv
-    argv = argv[argv.index("--") + 1:] if "--" in argv else []
+    # Blender versions/build wrappers differ in whether the "--" separator is
+    # preserved in sys.argv. Prefer the script arguments after it when present;
+    # otherwise parse known options and ignore Blender's own CLI flags.
+    argv = argv[argv.index("--") + 1:] if "--" in argv else argv[1:]
     p = argparse.ArgumentParser()
     p.add_argument("--output-dir", default="build/parliament-characters")
     p.add_argument("--samples", type=int, default=16)
-    return p.parse_args()
+    args, _unknown = p.parse_known_args(argv)
+    return args
 
 
 def material(name, color, roughness=0.55, metallic=0.0):
