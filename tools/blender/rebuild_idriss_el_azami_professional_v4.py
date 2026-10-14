@@ -232,7 +232,7 @@ def build(out,samples):
     # Fine swept grooves replace the previous stacked bulb-like hair locks.
     for i in range(5):
         x=-.29+i*.145
-        line("V4 | swept hair groove",[(x,-.285,2.985),(x+.035,-.302,3.035),(x+.075,-.27,3.075)],hair,.004)
+        line("V4 | swept hair groove",[(x,-.275,2.975),(x+.035,-.285,3.010),(x+.075,-.245,3.040)],hair,.003)
     # Studio scene and three cameras.
     floor=mat("Studio | warm slate",(.085,.095,.115),.78)
     cube("V4 | studio plinth",(0,0,.045),(1.6,1.2,.09),floor,.04)
@@ -252,6 +252,22 @@ def build(out,samples):
         bpy.ops.object.camera_add(location=loc);cam=bpy.context.object;cam.name="V4 camera | "+name
         cam.rotation_euler=(target-cam.location).to_track_quat("-Z","Y").to_euler();cam.data.lens=58;scene.camera=cam
         scene.render.filepath=str(out/f"idriss_v4_{name}.png");bpy.ops.render.render(write_still=True);renders.append(f"idriss_v4_{name}.png")
+        bpy.data.objects.remove(cam,do_unlink=True)
+    # Additional face-review renders: the full-body views are too small to judge
+    # eyelid contact, nose-to-cheek transitions, mouth placement and the skull
+    # silhouette reliably. Keep these as independent close-ups, not replacements.
+    head_target=Vector((0,-.02,2.665))
+    head_cams=[
+        ("head_front",(0,-3.8,2.68)),
+        ("head_three_quarter",(2.55,-3.65,2.72)),
+        ("head_profile",(4.2,-.02,2.68)),
+    ]
+    for name,loc in head_cams:
+        bpy.ops.object.camera_add(location=loc);cam=bpy.context.object;cam.name="V4 face-review camera | "+name
+        cam.rotation_euler=(head_target-cam.location).to_track_quat("-Z","Y").to_euler()
+        cam.data.lens=72;scene.camera=cam
+        scene.render.filepath=str(out/f"idriss_v4_{name}.png")
+        bpy.ops.render.render(write_still=True);renders.append(f"idriss_v4_{name}.png")
         bpy.data.objects.remove(cam,do_unlink=True)
     # Export only model geometry, not cameras/lights/floor. Include all character pieces.
     model_names=[o for o in scene.objects if o.name.startswith("V4 |") and o.type in {"MESH","CURVE"}]
