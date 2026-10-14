@@ -63,8 +63,8 @@ def head_mesh(skin):
     # Explicit anatomical cross-sections: chin, jaw angle, cheek plane,
     # temple, brow and cranial vault are shaped as one continuous surface.
     rings=[
-      (2.075,.105,.155,-.018),(2.105,.205,.205,-.020),
-      (2.16,.285,.255,-.018),(2.235,.345,.292,-.010),
+      (2.075,.155,.160,-.030),(2.105,.245,.208,-.028),
+      (2.16,.315,.255,-.023),(2.235,.365,.292,-.015),
       (2.315,.392,.320,.000),(2.405,.425,.337,.008),
       (2.505,.447,.350,.012),(2.615,.458,.356,.014),
       (2.725,.452,.354,.015),(2.825,.430,.346,.018),
@@ -82,7 +82,7 @@ def head_mesh(skin):
             lower=max(0.0,min(1.0,(2.48-z)/.38))
             chin_push=.055*math.exp(-((z-2.13)/.10)**2)*front
             cheek_flat=.018*math.exp(-((z-2.43)/.16)**2)*front
-            jaw_taper=1.0-.12*lower
+            jaw_taper=1.0-.035*lower
             x=rx*cs*jaw_taper
             y=yc+ry*sn-chin_push+cheek_flat
             # Slightly narrower mid-face and broader upper temples avoid an egg profile.
@@ -181,10 +181,11 @@ def build(out,samples):
         line("V4 | lower eyelid",[(x-.095,-.331,2.649),(x,-.343,2.638),(x+.095,-.331,2.649)],skin_shadow,.009)
         line("V4 | brow",[(x-.112,-.323,2.744),(x-.035,-.346,2.768),(x+.045,-.345,2.757),(x+.112,-.318,2.738)],hair,.023)
     # A bridge, alar base and tip with a stronger but shorter profile transition.
-    uv("V4 | nose bridge",(0,-.342,2.535),(.052,.073,.125),skin,32,24)
-    uv("V4 | nose tip",(0,-.394,2.478),(.070,.066,.052),skin,32,20)
+    # Compact tapered nose planes reduce the round button-nose silhouette.
+    uv("V4 | nose bridge",(0,-.343,2.535),(.043,.066,.128),skin,40,28)
+    uv("V4 | nose tip",(0,-.389,2.478),(.058,.052,.043),skin,40,24)
     for side in (-1,1):
-        uv("V4 | nose ala",(side*.052,-.379,2.464),(.034,.040,.030),skin,24,16)
+        uv("V4 | nose ala",(side*.044,-.372,2.463),(.027,.031,.023),skin,28,18)
     for side in (-1,1):
         uv("V4 | nostril",(side*.043,-.462,2.456),(.021,.012,.014),black,16,10)
         # Cheek volume remains integrated into the continuous head silhouette.
@@ -193,8 +194,8 @@ def build(out,samples):
     uv("V4 | upper lip",(0,-.354,2.335),(.105,.025,.022),skin_shadow,32,16)
     line("V4 | mouth line",[(-.105,-.372,2.33),(0,-.381,2.32),(.105,-.372,2.33)],black,.012)
     uv("V4 | lower lip",(0,-.353,2.305),(.078,.021,.018),skin,32,16)
-    # Hairline cap with swept locks following the skull rather than a featureless egg cap.
-    uv("V4 | hair cap",(0,.005,2.965),(.43,.335,.19),hair,48,28)
+    # Hairline follows a flatter, slightly receding adult forehead silhouette.
+    uv("V4 | hair cap",(0,.020,2.968),(.425,.326,.172),hair,48,28)
     # Fine swept grooves replace the previous stacked bulb-like hair locks.
     for i in range(5):
         x=-.29+i*.145
