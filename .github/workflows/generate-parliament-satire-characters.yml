@@ -95,3 +95,63 @@ jobs:
             build/parliament-likeness-audit.json
           if-no-files-found: error
           retention-days: 14
+
+
+  idriss-el-azami-v4:
+    name: Independent Idriss V4 rebuild and visual evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender python3-numpy
+      - name: Verify reference catalog files exist without changing them
+        run: |
+          test -s source/parliament/references/idriss_el_azami_el_idrissi/README.md
+          test -s source/parliament/references/idriss_el_azami_el_idrissi/idriss_el_azami_el_idrissi_front.jpg
+          test -s source/parliament/references/idriss_el_azami_el_idrissi/idriss_el_azami_el_idrissi_profile.jpg
+          test -s source/parliament/references/idriss_el_azami_el_idrissi/idriss_el_azami_el_idrissi_three_quarter.jpg
+      - name: Generate independent V4 model and actual Blender renders
+        run: |
+          mkdir -p build/idriss-v4
+          PYTHONPATH=/usr/lib/python3/dist-packages blender --background --factory-startup --python tools/blender/rebuild_idriss_el_azami_professional_v4.py -- --output-dir build/idriss-v4 --samples 24
+      - name: Validate GLB structure, multi-view PNGs, and honest approval status
+        run: |
+          python3 - <<'PY'
+          import json, struct
+          from pathlib import Path
+          out=Path("build/idriss-v4")
+          m=json.loads((out/"manifest.json").read_text(encoding="utf-8"))
+          assert m["build_generation"]=="independent_rebuild_not_patch_of_v1_v2_v3"
+          assert m["approval_status"]=="pending_human_visual_review"
+          assert m["likeness_verified"] is False
+          assert len(m["outputs"]["renders"])==3
+          glb=(out/m["outputs"]["model"]).read_bytes()
+          assert glb[:4]==b"glTF" and struct.unpack("<I",glb[4:8])[0]==2
+          assert struct.unpack("<I",glb[8:12])[0]==len(glb)
+          njson,kind=struct.unpack("<I4s",glb[12:20])
+          assert kind==b"JSON"
+          data=json.loads(glb[20:20+njson].decode("utf-8").rstrip(" \\t\\r\\n\\0"))
+          assert len(data.get("nodes",[]))>=35, f"Insufficient exported geometry nodes: {len(data.get('nodes',[]))}"
+          assert len(data.get("materials",[]))>=6, f"Insufficient material variety: {len(data.get('materials',[]))}"
+          for name in m["outputs"]["renders"]:
+              p=out/name
+              assert p.is_file() and p.stat().st_size>10000, f"Missing/suspicious render {name}"
+              raw=p.read_bytes()
+              assert raw[:8]==bytes([137,80,78,71,13,10,26,10])
+              w,h=struct.unpack(">II",raw[16:24])
+              assert w==1200 and h==1200, f"Unexpected render dimensions {name}: {w}x{h}"
+              print(f"Rendered evidence: {name} {w}x{h} ({p.stat().st_size} bytes)")
+          print(f"GLB: {len(data.get('nodes',[]))} nodes, {len(data.get('materials',[]))} materials")
+          print("Technical validation passed; visual likeness is explicitly NOT approved by CI.")
+          PY
+      - name: Upload V4 model and visual evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: idriss-el-azami-professional-rebuild-v4
+          path: build/idriss-v4/
+          if-no-files-found: error
+          retention-days: 14
