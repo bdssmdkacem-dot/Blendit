@@ -85,6 +85,22 @@ def head_mesh(skin):
             jaw_taper=1.0-.035*lower
             x=rx*cs*jaw_taper
             y=yc+ry*sn-chin_push+cheek_flat
+            # Sculpt facial planes directly into the continuous skull surface.
+            # Positive displacement recesses the orbit; negative displacement brings
+            # brow, cheekbone and muzzle planes forward without attaching extra spheres.
+            frontal=max(0.0,-sn)**4
+            def bump(cx,cz,sx,sz,depth):
+                return depth*math.exp(-((x-cx)/sx)**2-((z-cz)/sz)**2)
+            orbit=0.0
+            for side in (-1,1):
+                orbit += bump(side*.17,2.665,.105,.055,.020)
+                orbit += bump(side*.205,2.465,.135,.105,-.018)
+                orbit += bump(side*.285,2.565,.105,.145,-.008)
+            brow_plane=0.0
+            for side in (-1,1):
+                brow_plane += bump(side*.17,2.715,.13,.040,-.014)
+            muzzle=bump(0.0,2.365,.145,.085,-.010)
+            y += frontal*(orbit+brow_plane+muzzle)
             # Slightly narrower mid-face and broader upper temples avoid an egg profile.
             if 2.53<z<2.80:
                 x*=1.0+.025*(1.0-front)
