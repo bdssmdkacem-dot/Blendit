@@ -10,10 +10,8 @@ def args():
     av=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else []
     out="build/idriss-el-azami"
     if "--output-dir" in av: out=av[av.index("--output-dir")+1]
-    ref_image=None
-    if "--reference-image" in av: ref_image=Path(av[av.index("--reference-image")+1])
     refs=Path("source/parliament/references/idriss_el_azami_el_idrissi")
-    return Path(out), refs, ref_image
+    return Path(out), refs
 
 def mat(n,c,rough=.48,metal=0):
     m=bpy.data.materials.new(n); m.diffuse_color=(*c,1); m.use_nodes=True
@@ -56,10 +54,26 @@ def line(n,pts,m,r=.018):
     o=bpy.data.objects.new(n,c);bpy.context.collection.objects.link(o);o.data.materials.append(m);return o
 
 def build(args_value):
-    out, ref_image = args_value
-    if not ref_image or not ref_image.is_file() or ref_image.stat().st_size < 1000:
-        raise RuntimeError("A downloaded photographic reference is required via --reference-image")
+    out, refs = args_value
+    reference_files = [refs / n for n in ("idriss_el_azami_el_idrissi_front.jpg", "idriss_el_azami_el_idrissi_three_quarter.jpg", "idriss_el_azami_el_idrissi_profile.jpg", "idriss_el_azami_front.jpg")]
+    available_refs = [p for p in reference_files if p.is_file() and p.stat().st_size > 1000]
+    if not available_refs:
+        raise RuntimeError(f"No repository character design references found in {refs}")
     bpy.ops.object.select_all(action="SELECT");bpy.ops.object.delete(use_global=False)
+    # Load repository design sheets as hidden, non-rendering references in the .blend.
+    # Do not copy these images into output; they remain source-controlled files.
+    ref_collection = bpy.data.collections.new("REFERENCE SHEETS | repository only")
+    bpy.context.scene.collection.children.link(ref_collection)
+    for ref_path in available_refs:
+        img = bpy.data.images.load(str(ref_path.resolve()), check_existing=True)
+        obj = bpy.data.objects.new("REFERENCE | " + ref_path.name, None)
+        obj.empty_display_type = "IMAGE"
+        obj.data = img
+        obj.hide_render = True
+        obj.hide_viewport = True
+        obj["source_path"] = ref_path.as_posix()
+        obj["reference_role"] = "stylized design and wardrobe guide; not photographic identity proof"
+        ref_collection.objects.link(obj)
     # restrained, production-friendly palette based on the supplied design sheets
     skin=mat("Skin | warm olive beige",(0.53,.34,.23),.58)
     skin_hi=mat("Skin | warm highlights",(.66,.45,.32),.62)
@@ -232,7 +246,7 @@ def build(args_value):
             o.select_set(True)
     bpy.context.view_layer.objects.active=next((o for o in bpy.context.scene.objects if o.select_get()),None)
     bpy.ops.export_scene.gltf(filepath=str(out/"idriss_el_azami_reference_led.glb"),export_format="GLB",use_selection=True,export_apply=True)
-    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Official campaign portrait downloaded at build time; source image is not stored in repository or output artifact.","real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":True,"photo_source_url":"https://elazami.com/assets/hero-azami.png","photo_reuse_rights_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"checks":{"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by the official campaign portrait downloaded at build time; photo is not committed to the repository.","Official campaign website used as the reference source. Photograph reuse rights are not verified; visual likeness and quality require human review.","Visual quality must be reviewed from the rendered PNGs before acceptance."]}
+    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Repository front, three-quarter, profile and multi-angle stylized design sheets.","repository_reference_files":[p.name for p in available_refs],"reference_files_copied_to_output":False,"real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"checks":{"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by repository front, three-quarter, profile and multi-angle stylized design references; these do not prove real-person likeness.","Repository images are stylized character/design renders. They guide shape and wardrobe but do not prove real-person likeness; photographic-source and reuse rights remain separately unverified.","Visual quality must be reviewed from the rendered PNGs before acceptance."]}
     (out/"manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print("ASSET_MANIFEST="+json.dumps(manifest))
 if __name__=="__main__":build(args())
