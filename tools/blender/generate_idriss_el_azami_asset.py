@@ -280,9 +280,9 @@ def build(args_value):
         # cuffs and subtle seams
         line("Trousers | pressed crease",[(x,-.19,.32),(x,-.19,.82),(x,-.19,1.04)],lapel,.006)
     # torso has shaped shoulder line, waist taper, layered shirt
-    ball("Jacket | sculpted torso",(0,.015,1.43),(.53,.32,.65),suit)
-    ball("Jacket | shoulder left",(-.37,.005,1.78),(.245,.285,.19),suit)
-    ball("Jacket | shoulder right",(.37,.005,1.78),(.245,.285,.19),suit)
+    ball("Jacket | sculpted torso",(0,.015,1.43),(.47,.30,.62),suit)
+    ball("Jacket | shoulder left",(-.35,.005,1.76),(.21,.255,.17),suit)
+    ball("Jacket | shoulder right",(.35,.005,1.76),(.21,.255,.17),suit)
     cube("Shirt | front placket",(0,-.313,1.67),(.30,.055,.49),shirt,.035)
     # collar triangles as small tailored panels
     cube("Shirt | collar left",(-.095,-.352,1.88),(.13,.035,.20),shirt,.018,(0,-.22,-.12))
@@ -307,19 +307,19 @@ def build(args_value):
     for s in (-1,1):
         ball("Ears | outer",(s*.405,-.005,2.47),(.082,.09,.13),skin,24,16)
         ball("Ears | inner",(s*.431,-.071,2.47),(.035,.025,.075),skin_hi,20,12)
-        ball("Cheeks | subtle volume",(s*.215,-.282,2.395),(.115,.065,.105),skin_hi,24,16)
+        ball("Cheeks | integrated subtle planes",(s*.19,-.285,2.405),(.085,.042,.072),skin,24,16)
     # brow ridge and eyes set into face
     for s in (-1,1):
         x=s*.155
-        ball("Eyes | socket",(x,-.328,2.55),(.12,.046,.085),skin_hi,24,16)
-        ball("Eyes | sclera",(x,-.365,2.55),(.083,.028,.052),white,24,16)
-        ball("Eyes | iris",(x+.008,-.389,2.548),(.033,.014,.036),iris,20,12)
-        ball("Eyes | pupil",(x+.009,-.401,2.548),(.015,.009,.02),pupil,16,10)
+        ball("Eyes | socket",(x,-.323,2.55),(.105,.035,.068),skin,24,16)
+        ball("Eyes | sclera",(x,-.357,2.55),(.070,.023,.040),white,24,16)
+        ball("Eyes | iris",(x+.006,-.376,2.548),(.025,.010,.027),iris,20,12)
+        ball("Eyes | pupil",(x+.007,-.385,2.548),(.012,.006,.015),pupil,16,10)
         ball("Eyes | catchlight",(x+.016,-.409,2.563),(.007,.005,.008),white,12,8)
         line("Brows | expressive silver charcoal",[(x-.10,-.372,2.645),(x,-.394,2.672),(x+.09,-.37,2.65)],hair,.025)
     # long, distinct nose bridge and tip
-    ball("Nose | bridge",(0,-.369,2.43),(.067,.08,.14),skin_hi,28,18)
-    ball("Nose | tip",(0,-.427,2.385),(.075,.065,.055),skin,24,16)
+    ball("Nose | bridge",(0,-.355,2.435),(.048,.058,.12),skin,28,18)
+    ball("Nose | tip",(0,-.398,2.385),(.058,.05,.043),skin_hi,24,16)
     for s in (-1,1):ball("Nose | nostril",(s*.037,-.475,2.365),(.016,.009,.012),stubble,12,8)
     # mouth, philtrum, mustache and neat stubble: graphic but not photographic claims
     line("Mouth | upper lip",[(-.105,-.375,2.285),(-.045,-.397,2.292),(0,-.401,2.28),(.045,-.397,2.292),(.105,-.375,2.285)],mouth,.012)
@@ -344,7 +344,7 @@ def build(args_value):
         rod("Sleeves | forearm",elbow,wrist,.112,suit)
         rod("Cuffs | ivory edge",(s*.72,-.13,1.28),(s*.72,-.13,1.22),.116,shirt)
         palm=(s*.72,-.16,1.13)
-        ball("Hands | palm",palm,(.095,.07,.115),skin,24,16)
+        ball("Hands | palm",palm,(.078,.055,.095),skin,24,16)
         # fingers fan naturally downwards and slightly outward; thumb angles toward body
         finger_names=("index","middle","ring","pinky")
         for j in range(4):
@@ -404,7 +404,7 @@ def build(args_value):
     else:
         raise RuntimeError("Rig armature missing before GLB export")
     bpy.ops.export_scene.gltf(filepath=str(out/"idriss_el_azami_reference_led.glb"),export_format="GLB",use_selection=True,export_apply=False,export_animations=True)
-    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Repository front, three-quarter, profile and multi-angle stylized design sheets.","repository_reference_files":[p.name for p in available_refs],"reference_files_copied_to_output":False,"real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"rig":{"object":"RIG | Idriss | full body","named_bones":True,"starter_action":"Idle_Breathing | starter action","skin_deformation_weights":"not yet validated; continuous skin mesh required","facial_visemes":"not yet implemented; jaw and lip parts have jaw-bone assignments only","eye_blink_controls":"eye.L and eye.R bone assignments added; eyelid geometry/blink animation still pending","finger_controls":"individual finger segment controls assigned to modeled finger parts; deformation still requires pose review","animation_acceptance":"pending pose and export review"},"checks":{"continuous_sculpted_head_mesh":True,"integrated_crown_no_cap_sphere":True,"jawline_no_floating_stubble":True,"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by repository front, three-quarter, profile and multi-angle stylized design references; these do not prove real-person likeness.","Repository images are stylized character/design renders. They guide shape and wardrobe but do not prove real-person likeness; photographic-source and reuse rights remain separately unverified.","Visual quality must be reviewed from the rendered PNGs before acceptance.","The rig and breathing action are a foundation only; this asset is not accepted as a complete production character until continuous skin deformation, facial visemes, eye blinks/gaze, clothing deformation and animation export are tested."]}
+    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Repository front, three-quarter, profile and multi-angle stylized design sheets.","repository_reference_files":[p.name for p in available_refs],"reference_files_copied_to_output":False,"real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"rig":{"object":"RIG | Idriss | full body","named_bones":True,"starter_action":"Idle_Breathing | starter action","skin_deformation_weights":"not yet validated; continuous skin mesh required","facial_visemes":"not yet implemented; jaw and lip parts have jaw-bone assignments only","eye_blink_controls":"eye.L and eye.R bone assignments added; eyelid geometry/blink animation still pending","finger_controls":"individual finger segment controls assigned to modeled finger parts; deformation still requires pose review","animation_acceptance":"pending pose and export review"},"checks":{"continuous_sculpted_head_mesh":True,"integrated_crown_no_cap_sphere":True,"jawline_no_floating_stubble":True,"reduced_eye_scale":True,"integrated_cheek_planes":True,"rebalanced_torso_shoulders":True,"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by repository front, three-quarter, profile and multi-angle stylized design references; these do not prove real-person likeness.","Repository images are stylized character/design renders. They guide shape and wardrobe but do not prove real-person likeness; photographic-source and reuse rights remain separately unverified.","Visual quality must be reviewed from the rendered PNGs before acceptance.","The rig and breathing action are a foundation only; this asset is not accepted as a complete production character until continuous skin deformation, facial visemes, eye blinks/gaze, clothing deformation and animation export are tested."]}
     (out/"manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print("ASSET_MANIFEST="+json.dumps(manifest))
 if __name__=="__main__":build(args())
