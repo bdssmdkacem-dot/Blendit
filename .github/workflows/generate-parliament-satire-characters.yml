@@ -8,6 +8,7 @@ on:
       - ".github/workflows/generate-parliament-satire-characters.yml"
       - "data/parliament/real_figure_profiles.json"
       - "tools/blender/validate_parliament_likeness.py"
+      - "tests/test_validate_parliament_likeness.py"
       - "docs/parliament-real-figure-caricature-roster.md"
 
 permissions:
@@ -48,6 +49,9 @@ jobs:
 
       - name: Audit real-figure likeness readiness (never infer approval from generic cast)
         run: python3 tools/blender/validate_parliament_likeness.py --json-out build/parliament-likeness-audit.json
+
+      - name: Test likeness audit status and approval gates
+        run: python3 -m unittest discover -s tests -p "test_validate_parliament_likeness.py" -v
 
       - name: Generate fictional cast
         run: |
