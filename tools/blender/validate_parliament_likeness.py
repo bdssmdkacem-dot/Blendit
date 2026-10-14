@@ -51,7 +51,7 @@ def audit(data: dict, repo_root: Path) -> tuple[list[dict], list[str]]:
             missing.append("existing_nonempty_reference_image")
 
         rights = profile.get("reference_rights_status", "")
-        if rights and rights not in APPROVED_RIGHTS:
+        if rights not in APPROVED_RIGHTS:
             missing.append("verified_reuse_rights")
 
         views = profile.get("preview_views", {})
