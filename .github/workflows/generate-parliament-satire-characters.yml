@@ -23,7 +23,7 @@ jobs:
       - name: Install Blender
         run: |
           sudo apt-get update
-          sudo apt-get install -y blender
+          sudo apt-get install -y blender python3-numpy
 
       - name: Validate named-figure reference catalog
         run: |
@@ -47,7 +47,7 @@ jobs:
 
       - name: Generate fictional cast
         run: |
-          blender --background --factory-startup --python tools/blender/generate_parliament_satire_characters.py -- --output-dir build/parliament-characters --samples 8
+          PYTHONPATH=/usr/lib/python3/dist-packages blender --background --factory-startup --python tools/blender/generate_parliament_satire_characters.py -- --output-dir build/parliament-characters --samples 8
 
       - name: Validate character assets and visual evidence
         run: |
