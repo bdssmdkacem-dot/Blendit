@@ -166,31 +166,43 @@ def build(out,samples):
         so=o.modifiers.new("Lapel thickness","SOLIDIFY");so.thickness=.018
         be=o.modifiers.new("Lapel edge softness","BEVEL");be.width=.012;be.segments=2
         uv("V4 | jacket button",(side*.105,-.315,1.29),(.025,.018,.025),gold,20,12)
-    # Facial forms are positioned from the revised skull landmarks, not decorative add-ons.
+    # Face rebuild pass: landmarks are sunk into the head surface wherever possible.
+    # The nose is a single lofted anatomical form, not stacked spheres.
     head_mesh(skin)
     for side in (-1,1):
-        uv("V4 | ear",(side*.425,.005,2.535),(.078,.092,.135),skin)
-        uv("V4 | ear inner",(side*.454,-.064,2.535),(.025,.018,.061),skin_shadow,24,16)
-        # Mature, narrower eye openings under a pronounced brow ridge; avoid toy-like round eyes.
-        x=side*.174
-        uv("V4 | eye socket",(x,-.304,2.663),(.112,.022,.052),skin_shadow)
-        uv("V4 | eye",(x,-.324,2.663),(.076,.014,.024),eye,36,22)
-        uv("V4 | iris",(x-side*.004,-.337,2.663),(.021,.007,.021),iris,24,16)
-        uv("V4 | pupil",(x-side*.004,-.344,2.663),(.009,.004,.012),black,16,12)
-        line("V4 | upper eyelid",[(x-.103,-.326,2.668),(x-.045,-.342,2.690),(x+.015,-.344,2.691),(x+.103,-.326,2.667)],skin_shadow,.015)
-        line("V4 | lower eyelid",[(x-.096,-.326,2.653),(x,-.337,2.646),(x+.096,-.326,2.653)],skin_shadow,.009)
-        # Brow has an inner weight and a tapered outer tail, rather than a uniform arch.
-        line("V4 | brow",[(x-.118,-.315,2.733),(x-.065,-.338,2.752),(x-.010,-.347,2.754),(x+.055,-.339,2.741),(x+.112,-.315,2.727)],hair,.019)
-    # A bridge, alar base and tip with a stronger but shorter profile transition.
-    # Compact tapered nose planes reduce the round button-nose silhouette.
-    uv("V4 | nose bridge",(0,-.343,2.535),(.043,.066,.128),skin,40,28)
-    uv("V4 | nose tip",(0,-.389,2.478),(.058,.052,.043),skin,40,24)
+        uv("V4 | integrated ear",(side*.414,-.006,2.535),(.052,.061,.112),skin,40,28)
+        line("V4 | ear antihelix",[(side*.414,-.061,2.585),(side*.398,-.067,2.55),(side*.414,-.061,2.51)],skin_shadow,.007)
+        x=side*.169
+        uv("V4 | orbital shadow",(x,-.316,2.665),(.099,.014,.042),skin_shadow,40,24)
+        uv("V4 | eye",(x,-.329,2.665),(.068,.010,.019),eye,40,24)
+        uv("V4 | iris",(x-side*.003,-.339,2.665),(.017,.005,.017),iris,28,18)
+        uv("V4 | pupil",(x-side*.003,-.344,2.665),(.007,.003,.009),black,20,12)
+        line("V4 | upper eyelid",[(x-.087,-.326,2.669),(x-.045,-.339,2.685),(x+.006,-.341,2.687),(x+.084,-.326,2.665)],skin,.012)
+        line("V4 | lower eyelid",[(x-.082,-.326,2.657),(x-.025,-.337,2.651),(x+.035,-.337,2.652),(x+.081,-.326,2.658)],skin_shadow,.007)
+        uv("V4 | brow ridge",(x,-.305,2.714),(.105,.025,.031),skin,40,24)
+        line("V4 | brow",[(x-.108,-.326,2.735),(x-.061,-.343,2.748),(x-.012,-.348,2.747),(x+.045,-.339,2.737),(x+.103,-.319,2.727)],hair,.012)
+    nose_rings=[
+        (2.603,.012,.012,-.359),(2.575,.025,.027,-.376),
+        (2.535,.031,.045,-.397),(2.495,.044,.052,-.426),
+        (2.474,.052,.047,-.448),(2.457,.039,.030,-.438),
+        (2.449,.018,.018,-.414)]
+    nv=[]; nf=[]; nn=32
+    for z,rx,ry,cy in nose_rings:
+        for j in range(nn):
+            t=2*math.pi*j/nn
+            nv.append((rx*math.cos(t),cy+ry*math.sin(t),z))
+    for i in range(len(nose_rings)-1):
+        for j in range(nn):
+            aa=i*nn+j; bb=i*nn+(j+1)%nn
+            nf.append((aa,bb,bb+nn,aa+nn))
+    nf.extend([tuple(range(nn-1,-1,-1)),tuple((len(nose_rings)-1)*nn+j for j in range(nn))])
+    nm=bpy.data.meshes.new("Integrated tapered nose mesh"); nm.from_pydata(nv,[],nf); nm.update()
+    no=bpy.data.objects.new("V4 | integrated nose bridge and tip",nm); bpy.context.collection.objects.link(no); no.data.materials.append(skin)
+    for p in nm.polygons:p.use_smooth=True
+    ns=no.modifiers.new("Nose surface refinement","SUBSURF"); ns.levels=2; ns.render_levels=2
     for side in (-1,1):
-        uv("V4 | nose ala",(side*.044,-.372,2.463),(.027,.031,.023),skin,28,18)
-    for side in (-1,1):
-        uv("V4 | nostril",(side*.043,-.462,2.456),(.021,.012,.014),black,16,10)
-        # Cheek volume remains integrated into the continuous head silhouette.
-        line("V4 | subtle nasolabial fold",[(side*.105,-.345,2.405),(side*.16,-.347,2.37),(side*.205,-.33,2.395)],skin_shadow,.006)
+        uv("V4 | alar wing",(side*.036,-.423,2.461),(.021,.023,.018),skin,32,20)
+        uv("V4 | nostril",(side*.034,-.446,2.454),(.012,.006,.008),black,20,12)
     # Restrained adult mouth: narrow lip volumes, defined philtrum and subtle asymmetry.
     line("V4 | philtrum left",[(-.025,-.352,2.385),(-.018,-.361,2.357)],skin_shadow,.006)
     line("V4 | philtrum right",[(.025,-.352,2.385),(.018,-.361,2.357)],skin_shadow,.006)
