@@ -10,7 +10,9 @@ def args():
     av=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else []
     out="build/idriss-el-azami"
     if "--output-dir" in av: out=av[av.index("--output-dir")+1]
-    return Path(out)
+    ref_image=None
+    if "--reference-image" in av: ref_image=Path(av[av.index("--reference-image")+1])
+    return Path(out), ref_image
 
 def mat(n,c,rough=.48,metal=0):
     m=bpy.data.materials.new(n); m.diffuse_color=(*c,1); m.use_nodes=True
@@ -52,7 +54,10 @@ def line(n,pts,m,r=.018):
     for p,v in zip(s.points,pts):p.co=(*v,1)
     o=bpy.data.objects.new(n,c);bpy.context.collection.objects.link(o);o.data.materials.append(m);return o
 
-def build(out):
+def build(args_value):
+    out, ref_image = args_value
+    if not ref_image or not ref_image.is_file() or ref_image.stat().st_size < 1000:
+        raise RuntimeError("A downloaded photographic reference is required via --reference-image")
     bpy.ops.object.select_all(action="SELECT");bpy.ops.object.delete(use_global=False)
     # restrained, production-friendly palette based on the supplied design sheets
     skin=mat("Skin | warm olive beige",(0.53,.34,.23),.58)
@@ -62,7 +67,7 @@ def build(out):
     suit=mat("Suit | deep midnight navy",(.025,.055,.105),.36)
     lapel=mat("Lapel | navy satin",(.055,.09,.15),.28)
     shirt=mat("Shirt | ivory",(.86,.84,.77),.42)
-    green=mat("Tie | rich emerald green",(.025,.25,.12),.3)
+    green=mat("Tie | deep blue matching official portrait",(.035,.105,.28),.3)
     gold=mat("Pin | brushed gold",(.68,.39,.08),.25,.72)
     black=mat("Shoes | polished oxblood black",(.055,.025,.023),.25)
     glasses=mat("Glasses | dark tortoiseshell",(.045,.03,.025),.22,.15)
@@ -131,14 +136,13 @@ def build(out):
             xx=s*(.17+i*.022)
             zz=2.22+(i%3)*.026
             ball("Stubble | jaw fleck",(xx,-.326+(i%2)*-.01,zz),(.009,.008,.012),stubble,10,8)
-    # silver side-parted hair: cap plus swept locks, avoiding a single featureless helmet
-    ball("Hair | crown cap",(0,.015,2.91),(.405,.34,.16),hair,40,24)
-    ball("Hair | side swept volume",(.12,-.13,2.93),(.23,.25,.095),hair_hi,28,16)
-    for i in range(9):
-        x=-.29+i*.07
-        line("Hair | combed strand",[(x,.005,2.91),(x+.035,-.19,2.965),(x+.055,-.25,2.92)],hair_hi if i%3==0 else hair,.008)
-    for s in (-1,1):
-        ball("Hair | temple",(s*.35,.015,2.72),(.075,.26,.16),hair,24,16)
+    # Bald head matching the official campaign portrait; do not invent a silver hairstyle.
+    ball("Scalp | clean bald crown",(0,.015,2.84),(.382,.335,.115),skin,40,24)
+    # subtle grey stubble follows the lower jaw
+    for i in range(17):
+        x=-.24+i*.03
+        for z in (2.22,2.245):
+            ball("Stubble | jawline detail",(x,-.30,z),(.008,.006,.009),stubble,10,8)
     # rectangular glasses with rims, bridge, temples; front faces -Y
     for s in (-1,1):
         x=s*.153
@@ -166,8 +170,7 @@ def build(out):
         rod("Hands | thumb",(palm[0]-s*.07,palm[1],palm[2]+.005),(palm[0]-s*.12,palm[1]-.025,palm[2]-.055),.026,skin,12)
     # signature lapel pin and emerald tie detail
     ball("Lapel pin | gold rim",(.39,-.378,1.83),(.052,.018,.052),gold,24,16)
-    ball("Lapel pin | green enamel",(.39,-.397,1.83),(.034,.01,.034),green,20,12)
-    line("Tie | subtle woven stripe",[(-.045,-.397,1.55),(0,-.397,1.51),(.045,-.397,1.47)],gold,.006)
+    line("Tie | subtle woven stripe",[(-.045,-.397,1.55),(0,-.397,1.51),(.045,-.397,1.47)],lapel,.006)
     # studio ground, world, lighting
     floor=mat("Studio | warm neutral",(.19,.205,.22),.82)
     cube("Studio | ground",(0,0,-.035),(200,200,.06),floor,.0)
@@ -184,6 +187,17 @@ def build(out):
     scene.render.resolution_x=1200;scene.render.resolution_y=1200;scene.render.resolution_percentage=100
     scene.render.image_settings.file_format="PNG";scene.render.film_transparent=False
     scene.view_settings.view_transform="AgX"
+    # Keep the official photo as a non-rendering viewport reference only.
+    # It is never copied to output or committed to the repository.
+    ref_obj = bpy.data.objects.new("REFERENCE ONLY | official campaign portrait", None)
+    ref_obj.empty_display_type = "IMAGE"
+    ref_obj.hide_render = True
+    ref_obj.hide_viewport = True
+    ref_obj["source_url"] = "https://elazami.com/assets/hero-azami.png"
+    ref_obj["reuse_rights_verified"] = False
+    ref_obj.data = bpy.data.images.load(str(ref_image), check_existing=True)
+    ref_obj.data.pack()
+    bpy.context.collection.objects.link(ref_obj)
     # orthographic turntable views with a consistent portrait framing
     bpy.ops.object.camera_add(location=(4,-8,3.0));cam=bpy.context.object;cam.name="Studio camera"
     cam.data.type="ORTHO";cam.data.ortho_scale=3.65
@@ -203,7 +217,7 @@ def build(out):
             o.select_set(True)
     bpy.context.view_layer.objects.active=next((o for o in bpy.context.scene.objects if o.select_get()),None)
     bpy.ops.export_scene.gltf(filepath=str(out/"idriss_el_azami_reference_led.glb"),export_format="GLB",use_selection=True,export_apply=True)
-    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"source/parliament/references/idriss_el_azami_el_idrissi/","real_person_likeness_verified":False,"photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"checks":{"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"silver_side_parted_hair":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural independent model generated from supplied stylized design sheets.","This is not a verified likeness; obtain a trustworthy photographic reference and document its source and reuse rights before likeness approval.","Visual quality must be reviewed from the rendered PNGs before acceptance."]}
+    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Official campaign portrait downloaded at build time; source image is not stored in repository or output artifact.","real_person_likeness_verified":False,"photo_source_verified":True,"photo_source_url":"https://elazami.com/assets/hero-azami.png","photo_reuse_rights_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"checks":{"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by the official campaign portrait downloaded at build time; photo is not committed to the repository.","Official campaign website used as the reference source. Photograph reuse rights are not verified; visual likeness and quality require human review.","Visual quality must be reviewed from the rendered PNGs before acceptance."]}
     (out/"manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print("ASSET_MANIFEST="+json.dumps(manifest))
 if __name__=="__main__":build(args())
