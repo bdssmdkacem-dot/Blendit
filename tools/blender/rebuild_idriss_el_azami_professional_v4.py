@@ -189,14 +189,14 @@ def build(out,samples):
         uv("V4 | integrated ear",(side*.397,.006,2.535),(.048,.052,.103),skin,40,28)
         line("V4 | ear antihelix",[(side*.397,-.041,2.578),(side*.386,-.045,2.55),(side*.397,-.041,2.515)],skin_shadow,.005)
         x=side*.169
-        uv("V4 | orbital shadow",(x,-.313,2.665),(.094,.009,.034),skin_shadow,40,24)
-        uv("V4 | eye",(x,-.324,2.665),(.061,.008,.015),eye,40,24)
+        uv("V4 | orbital shadow",(x,-.296,2.665),(.094,.007,.034),skin_shadow,40,24)
+        uv("V4 | eye",(x,-.306,2.665),(.058,.006,.014),eye,40,24)
         uv("V4 | iris",(x-side*.003,-.332,2.665),(.014,.004,.014),iris,28,18)
         uv("V4 | pupil",(x-side*.003,-.336,2.665),(.006,.003,.008),black,20,12)
-        line("V4 | upper eyelid",[(x-.080,-.321,2.669),(x-.040,-.332,2.680),(x+.006,-.334,2.681),(x+.078,-.321,2.665)],skin,.010)
-        line("V4 | lower eyelid",[(x-.075,-.321,2.658),(x-.025,-.330,2.653),(x+.035,-.330,2.654),(x+.075,-.321,2.658)],skin_shadow,.005)
-        uv("V4 | brow ridge",(x,-.300,2.714),(.108,.018,.025),skin,40,24)
-        line("V4 | brow",[(x-.108,-.326,2.735),(x-.061,-.343,2.748),(x-.012,-.348,2.747),(x+.045,-.339,2.737),(x+.103,-.319,2.727)],hair,.012)
+        line("V4 | upper eyelid",[(x-.080,-.304,2.669),(x-.040,-.314,2.680),(x+.006,-.316,2.681),(x+.078,-.304,2.665)],skin,.010)
+        line("V4 | lower eyelid",[(x-.075,-.304,2.658),(x-.025,-.312,2.653),(x+.035,-.312,2.654),(x+.075,-.304,2.658)],skin_shadow,.005)
+        uv("V4 | brow ridge",(x,-.286,2.714),(.108,.014,.025),skin,40,24)
+        line("V4 | brow",[(x-.108,-.305,2.735),(x-.061,-.319,2.748),(x-.012,-.322,2.747),(x+.045,-.316,2.737),(x+.103,-.300,2.727)],hair,.012)
     nose_rings=[
         (2.603,.012,.012,-.359),(2.575,.025,.027,-.376),
         (2.535,.031,.045,-.397),(2.495,.044,.052,-.426),
@@ -217,8 +217,8 @@ def build(out,samples):
     for p in nm.polygons:p.use_smooth=True
     ns=no.modifiers.new("Nose surface refinement","SUBSURF"); ns.levels=2; ns.render_levels=2
     for side in (-1,1):
-        uv("V4 | alar wing",(side*.033,-.376,2.461),(.016,.015,.013),skin,32,20)
-        uv("V4 | nostril",(side*.031,-.392,2.454),(.008,.003,.005),black,20,12)
+        uv("V4 | alar wing",(side*.033,-.350,2.461),(.015,.012,.012),skin,32,20)
+        uv("V4 | nostril",(side*.031,-.363,2.454),(.007,.0025,.004),black,20,12)
     # Restrained adult mouth: narrow lip volumes, defined philtrum and subtle asymmetry.
     line("V4 | philtrum left",[(-.022,-.342,2.385),(-.017,-.350,2.357)],skin_shadow,.004)
     line("V4 | philtrum right",[(.022,-.342,2.385),(.017,-.350,2.357)],skin_shadow,.004)
