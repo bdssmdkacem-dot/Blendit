@@ -60,17 +60,35 @@ def line(name, pts, material, width=.018):
 def head_mesh(skin):
     # Continuous lofted head with a tapered jaw and broad cheek/temple transitions.
     # Rings are elliptical cross sections, not a sphere with facial pieces stuck on.
+    # Explicit anatomical cross-sections: chin, jaw angle, cheek plane,
+    # temple, brow and cranial vault are shaped as one continuous surface.
     rings=[
-      (2.08,.20,.22,.00),(2.15,.29,.28,.00),(2.24,.37,.32,.00),
-      (2.36,.43,.355,.00),(2.50,.47,.37,.00),(2.66,.475,.37,.005),
-      (2.82,.45,.355,.012),(2.96,.39,.32,.02),(3.07,.28,.25,.02),
-      (3.12,.12,.12,.02)]
-    n=48; verts=[]; faces=[]
-    for z,rx,ry,yc in rings:
+      (2.075,.105,.155,-.018),(2.105,.205,.205,-.020),
+      (2.16,.285,.255,-.018),(2.235,.345,.292,-.010),
+      (2.315,.392,.320,.000),(2.405,.425,.337,.008),
+      (2.505,.447,.350,.012),(2.615,.458,.356,.014),
+      (2.725,.452,.354,.015),(2.825,.430,.346,.018),
+      (2.915,.390,.325,.020),(2.985,.330,.285,.020),
+      (3.045,.245,.225,.018),(3.085,.145,.145,.015),
+      (3.095,.055,.065,.012)]
+    n=64; verts=[]; faces=[]
+    for ri,(z,rx,ry,yc) in enumerate(rings):
         for j in range(n):
             t=2*math.pi*j/n
-            # front is -Y; cheeks/jaw remain rounded while chin tapers.
-            verts.append((rx*math.cos(t), yc+ry*math.sin(t), z))
+            cs=math.cos(t); sn=math.sin(t)
+            # Front is -Y. Project the lower face forward at the chin,
+            # pull the mouth/jaw back slightly, and flatten the cheek planes.
+            front=max(0.0,-sn)
+            lower=max(0.0,min(1.0,(2.48-z)/.38))
+            chin_push=.055*math.exp(-((z-2.13)/.10)**2)*front
+            cheek_flat=.018*math.exp(-((z-2.43)/.16)**2)*front
+            jaw_taper=1.0-.12*lower
+            x=rx*cs*jaw_taper
+            y=yc+ry*sn-chin_push+cheek_flat
+            # Slightly narrower mid-face and broader upper temples avoid an egg profile.
+            if 2.53<z<2.80:
+                x*=1.0+.025*(1.0-front)
+            verts.append((x,y,z))
     for i in range(len(rings)-1):
         for j in range(n):
             a=i*n+j; b=i*n+(j+1)%n
@@ -148,22 +166,25 @@ def build(out,samples):
         so=o.modifiers.new("Lapel thickness","SOLIDIFY");so.thickness=.018
         be=o.modifiers.new("Lapel edge softness","BEVEL");be.width=.012;be.segments=2
         uv("V4 | jacket button",(side*.105,-.315,1.29),(.025,.018,.025),gold,20,12)
-    # Sculpted head, shaped nose bridge/tip, cheeks, ears.
+    # Facial forms are positioned from the revised skull landmarks, not decorative add-ons.
     head_mesh(skin)
     for side in (-1,1):
-        uv("V4 | ear",(side*.455,0,2.55),(.095,.105,.15),skin)
-        uv("V4 | ear inner",(side*.49,-.075,2.55),(.035,.025,.075),skin_shadow,24,16)
-        # eye sockets, almond-shaped eye volumes, irises and lids
-        x=side*.185
-        uv("V4 | eye socket",(x,-.316,2.665),(.125,.028,.071),skin_shadow)
-        uv("V4 | eye",(x,-.342,2.668),(.092,.023,.041),eye)
-        uv("V4 | iris",(x-side*.006,-.362,2.667),(.031,.012,.033),iris,24,16)
-        uv("V4 | pupil",(x-side*.006,-.372,2.667),(.013,.007,.017),black,16,12)
-        line("V4 | upper eyelid",[(x-.12,-.355,2.676),(x,-.371,2.72),(x+.12,-.355,2.676)],skin_shadow,.016)
-        line("V4 | brow",[(x-.125,-.352,2.76),(x,-.38,2.79),(x+.12,-.35,2.765)],hair,.026)
-    # nose bridge lofted from glabella to tip with restrained profile
-    uv("V4 | nose bridge",(0,-.352,2.53),(.067,.085,.145),skin,32,24)
-    uv("V4 | nose tip",(0,-.413,2.475),(.082,.078,.065),skin,32,20)
+        uv("V4 | ear",(side*.425,.005,2.535),(.078,.092,.135),skin)
+        uv("V4 | ear inner",(side*.454,-.064,2.535),(.025,.018,.061),skin_shadow,24,16)
+        # Deeper-set eyes, reduced exposed eyeball and more deliberate orbital/brow planes.
+        x=side*.174
+        uv("V4 | eye socket",(x,-.307,2.665),(.112,.027,.060),skin_shadow)
+        uv("V4 | eye",(x,-.329,2.666),(.078,.018,.030),eye,32,20)
+        uv("V4 | iris",(x-side*.004,-.345,2.666),(.025,.009,.026),iris,24,16)
+        uv("V4 | pupil",(x-side*.004,-.353,2.666),(.010,.005,.014),black,16,12)
+        line("V4 | upper eyelid",[(x-.102,-.336,2.675),(x,-.351,2.704),(x+.102,-.336,2.675)],skin_shadow,.014)
+        line("V4 | lower eyelid",[(x-.095,-.331,2.649),(x,-.343,2.638),(x+.095,-.331,2.649)],skin_shadow,.009)
+        line("V4 | brow",[(x-.112,-.323,2.744),(x-.035,-.346,2.768),(x+.045,-.345,2.757),(x+.112,-.318,2.738)],hair,.023)
+    # A bridge, alar base and tip with a stronger but shorter profile transition.
+    uv("V4 | nose bridge",(0,-.342,2.535),(.052,.073,.125),skin,32,24)
+    uv("V4 | nose tip",(0,-.394,2.478),(.070,.066,.052),skin,32,20)
+    for side in (-1,1):
+        uv("V4 | nose ala",(side*.052,-.379,2.464),(.034,.040,.030),skin,24,16)
     for side in (-1,1):
         uv("V4 | nostril",(side*.043,-.462,2.456),(.021,.012,.014),black,16,10)
         # Cheek volume remains integrated into the continuous head silhouette.
