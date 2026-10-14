@@ -189,19 +189,19 @@ def build(out,samples):
         uv("V4 | integrated ear",(side*.397,.006,2.535),(.048,.052,.103),skin,40,28)
         line("V4 | ear antihelix",[(side*.397,-.041,2.578),(side*.386,-.045,2.55),(side*.397,-.041,2.515)],skin_shadow,.005)
         x=side*.169
-        uv("V4 | orbital shadow",(x,-.296,2.665),(.094,.007,.034),skin_shadow,40,24)
-        uv("V4 | eye",(x,-.306,2.665),(.058,.006,.014),eye,40,24)
-        uv("V4 | iris",(x-side*.003,-.332,2.665),(.014,.004,.014),iris,28,18)
-        uv("V4 | pupil",(x-side*.003,-.336,2.665),(.006,.003,.008),black,20,12)
-        line("V4 | upper eyelid",[(x-.080,-.304,2.669),(x-.040,-.314,2.680),(x+.006,-.316,2.681),(x+.078,-.304,2.665)],skin,.010)
-        line("V4 | lower eyelid",[(x-.075,-.304,2.658),(x-.025,-.312,2.653),(x+.035,-.312,2.654),(x+.075,-.304,2.658)],skin_shadow,.005)
-        uv("V4 | brow ridge",(x,-.286,2.714),(.108,.014,.025),skin,40,24)
-        line("V4 | brow",[(x-.108,-.305,2.735),(x-.061,-.319,2.748),(x-.012,-.322,2.747),(x+.045,-.316,2.737),(x+.103,-.300,2.727)],hair,.012)
+        uv("V4 | orbital shadow",(x,-.316,2.665),(.088,.006,.030),skin_shadow,40,24)
+        uv("V4 | eye",(x,-.328,2.665),(.054,.006,.013),eye,40,24)
+        uv("V4 | iris",(x-side*.003,-.334,2.665),(.013,.0035,.013),iris,28,18)
+        uv("V4 | pupil",(x-side*.003,-.337,2.665),(.006,.0025,.008),black,20,12)
+        line("V4 | upper eyelid",[(x-.078,-.318,2.669),(x-.040,-.330,2.680),(x+.006,-.332,2.681),(x+.078,-.318,2.665)],skin,.010)
+        line("V4 | lower eyelid",[(x-.075,-.318,2.658),(x-.025,-.328,2.653),(x+.035,-.328,2.654),(x+.075,-.318,2.658)],skin_shadow,.005)
+        uv("V4 | brow ridge",(x,-.309,2.714),(.100,.010,.022),skin,40,24)
+        line("V4 | brow",[(x-.108,-.319,2.735),(x-.061,-.329,2.748),(x-.012,-.332,2.747),(x+.045,-.327,2.737),(x+.103,-.315,2.727)],hair,.012)
     nose_rings=[
-        (2.603,.012,.012,-.359),(2.575,.025,.027,-.376),
-        (2.535,.031,.045,-.397),(2.495,.044,.052,-.426),
-        (2.474,.052,.047,-.448),(2.457,.039,.030,-.438),
-        (2.449,.018,.018,-.414)]
+        (2.603,.010,.010,-.335),(2.575,.021,.022,-.348),
+        (2.535,.027,.034,-.361),(2.495,.036,.039,-.376),
+        (2.474,.042,.036,-.386),(2.457,.031,.023,-.379),
+        (2.449,.014,.014,-.367)]
     nv=[]; nf=[]; nn=32
     for z,rx,ry,cy in nose_rings:
         for j in range(nn):
@@ -217,16 +217,16 @@ def build(out,samples):
     for p in nm.polygons:p.use_smooth=True
     ns=no.modifiers.new("Nose surface refinement","SUBSURF"); ns.levels=2; ns.render_levels=2
     for side in (-1,1):
-        uv("V4 | alar wing",(side*.033,-.350,2.461),(.015,.012,.012),skin,32,20)
-        uv("V4 | nostril",(side*.031,-.363,2.454),(.007,.0025,.004),black,20,12)
+        uv("V4 | alar wing",(side*.030,-.374,2.461),(.013,.010,.010),skin,32,20)
+        uv("V4 | nostril",(side*.028,-.390,2.454),(.006,.002,.0035),black,20,12)
     # Restrained adult mouth: narrow lip volumes, defined philtrum and subtle asymmetry.
-    line("V4 | philtrum left",[(-.022,-.342,2.385),(-.017,-.350,2.357)],skin_shadow,.004)
-    line("V4 | philtrum right",[(.022,-.342,2.385),(.017,-.350,2.357)],skin_shadow,.004)
-    uv("V4 | upper lip",(0,-.341,2.337),(.074,.010,.010),skin_shadow,36,20)
-    line("V4 | mouth line",[(-.078,-.350,2.337),(-.040,-.355,2.333),(0,-.356,2.331),(.044,-.354,2.335),(.078,-.348,2.34)],black,.006)
-    uv("V4 | lower lip",(0,-.340,2.315),(.060,.009,.008),skin,36,20)
+    line("V4 | philtrum left",[(-.020,-.327,2.385),(-.016,-.333,2.357)],skin_shadow,.003)
+    line("V4 | philtrum right",[(.020,-.327,2.385),(.016,-.333,2.357)],skin_shadow,.003)
+    uv("V4 | upper lip",(0,-.332,2.337),(.065,.006,.008),skin_shadow,36,20)
+    line("V4 | mouth line",[(-.068,-.334,2.337),(-.036,-.337,2.333),(0,-.338,2.331),(.040,-.337,2.335),(.068,-.333,2.34)],black,.004)
+    uv("V4 | lower lip",(0,-.330,2.315),(.052,.006,.007),skin,36,20)
     # Chin crease gives the lower face a less smooth, toy-like transition.
-    line("V4 | chin crease",[(-.050,-.322,2.255),(0,-.331,2.248),(.050,-.322,2.255)],skin_shadow,.004)
+    line("V4 | chin crease",[(-.045,-.315,2.255),(0,-.321,2.248),(.045,-.315,2.255)],skin_shadow,.003)
     # Hairline follows a flatter, slightly receding adult forehead silhouette.
     uv("V4 | hair cap",(0,.020,2.968),(.425,.326,.172),hair,48,28)
     # Fine swept grooves replace the previous stacked bulb-like hair locks.
