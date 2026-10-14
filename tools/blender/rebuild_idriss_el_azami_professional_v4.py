@@ -171,15 +171,16 @@ def build(out,samples):
     for side in (-1,1):
         uv("V4 | ear",(side*.425,.005,2.535),(.078,.092,.135),skin)
         uv("V4 | ear inner",(side*.454,-.064,2.535),(.025,.018,.061),skin_shadow,24,16)
-        # Deeper-set eyes, reduced exposed eyeball and more deliberate orbital/brow planes.
+        # Mature, narrower eye openings under a pronounced brow ridge; avoid toy-like round eyes.
         x=side*.174
-        uv("V4 | eye socket",(x,-.307,2.665),(.112,.027,.060),skin_shadow)
-        uv("V4 | eye",(x,-.329,2.666),(.078,.018,.030),eye,32,20)
-        uv("V4 | iris",(x-side*.004,-.345,2.666),(.025,.009,.026),iris,24,16)
-        uv("V4 | pupil",(x-side*.004,-.353,2.666),(.010,.005,.014),black,16,12)
-        line("V4 | upper eyelid",[(x-.102,-.336,2.675),(x,-.351,2.704),(x+.102,-.336,2.675)],skin_shadow,.014)
-        line("V4 | lower eyelid",[(x-.095,-.331,2.649),(x,-.343,2.638),(x+.095,-.331,2.649)],skin_shadow,.009)
-        line("V4 | brow",[(x-.112,-.323,2.744),(x-.035,-.346,2.768),(x+.045,-.345,2.757),(x+.112,-.318,2.738)],hair,.023)
+        uv("V4 | eye socket",(x,-.304,2.663),(.112,.022,.052),skin_shadow)
+        uv("V4 | eye",(x,-.324,2.663),(.076,.014,.024),eye,36,22)
+        uv("V4 | iris",(x-side*.004,-.337,2.663),(.021,.007,.021),iris,24,16)
+        uv("V4 | pupil",(x-side*.004,-.344,2.663),(.009,.004,.012),black,16,12)
+        line("V4 | upper eyelid",[(x-.103,-.326,2.668),(x-.045,-.342,2.690),(x+.015,-.344,2.691),(x+.103,-.326,2.667)],skin_shadow,.015)
+        line("V4 | lower eyelid",[(x-.096,-.326,2.653),(x,-.337,2.646),(x+.096,-.326,2.653)],skin_shadow,.009)
+        # Brow has an inner weight and a tapered outer tail, rather than a uniform arch.
+        line("V4 | brow",[(x-.118,-.315,2.733),(x-.065,-.338,2.752),(x-.010,-.347,2.754),(x+.055,-.339,2.741),(x+.112,-.315,2.727)],hair,.019)
     # A bridge, alar base and tip with a stronger but shorter profile transition.
     # Compact tapered nose planes reduce the round button-nose silhouette.
     uv("V4 | nose bridge",(0,-.343,2.535),(.043,.066,.128),skin,40,28)
@@ -190,10 +191,14 @@ def build(out,samples):
         uv("V4 | nostril",(side*.043,-.462,2.456),(.021,.012,.014),black,16,10)
         # Cheek volume remains integrated into the continuous head silhouette.
         line("V4 | subtle nasolabial fold",[(side*.105,-.345,2.405),(side*.16,-.347,2.37),(side*.205,-.33,2.395)],skin_shadow,.006)
-    # Mouth plane and shaped lip line, anchored to face rather than floating.
-    uv("V4 | upper lip",(0,-.354,2.335),(.105,.025,.022),skin_shadow,32,16)
-    line("V4 | mouth line",[(-.105,-.372,2.33),(0,-.381,2.32),(.105,-.372,2.33)],black,.012)
-    uv("V4 | lower lip",(0,-.353,2.305),(.078,.021,.018),skin,32,16)
+    # Restrained adult mouth: narrow lip volumes, defined philtrum and subtle asymmetry.
+    line("V4 | philtrum left",[(-.025,-.352,2.385),(-.018,-.361,2.357)],skin_shadow,.006)
+    line("V4 | philtrum right",[(.025,-.352,2.385),(.018,-.361,2.357)],skin_shadow,.006)
+    uv("V4 | upper lip",(0,-.356,2.337),(.082,.014,.014),skin_shadow,36,20)
+    line("V4 | mouth line",[(-.087,-.367,2.337),(-.045,-.374,2.333),(0,-.376,2.331),(.047,-.373,2.335),(.087,-.365,2.34)],black,.008)
+    uv("V4 | lower lip",(0,-.354,2.315),(.067,.012,.011),skin,36,20)
+    # Chin crease gives the lower face a less smooth, toy-like transition.
+    line("V4 | chin crease",[(-.052,-.333,2.255),(0,-.345,2.248),(.052,-.333,2.255)],skin_shadow,.006)
     # Hairline follows a flatter, slightly receding adult forehead silhouette.
     uv("V4 | hair cap",(0,.020,2.968),(.425,.326,.172),hair,48,28)
     # Fine swept grooves replace the previous stacked bulb-like hair locks.
