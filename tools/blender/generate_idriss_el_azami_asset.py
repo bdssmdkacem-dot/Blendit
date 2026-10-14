@@ -118,19 +118,14 @@ def create_character_rig():
             bone_name="foot.L" if obj.location.x < 0 else "foot.R"
         elif "trouser" in n:
             bone_name="thigh.L" if obj.location.x < 0 else "thigh.R"
-        elif "hands | finger" in n:
+        elif "hands |" in n and "finger" in n and "fingertip" not in n:
             side = "L" if obj.location.x < 0 else "R"
-            # Four modeled fingers are currently single rigid segments; keep their
-            # control explicit rather than silently binding them to the palm.
-            finger_index = min(4, max(1, round((abs(obj.location.x) - .72) / .043 + 2.5)))
-            finger_names = ("index", "middle", "ring", "pinky")
-            finger_name = finger_names[min(3, max(0, finger_index - 1))]
+            finger_name = next((name for name in ("index","middle","ring","pinky") if name in n), "index")
             bone_name=f"{finger_name}.01.{side}"
-        elif "hands | fingertip" in n:
+        elif "hands |" in n and "fingertip" in n:
             side = "L" if obj.location.x < 0 else "R"
-            finger_names = ("index", "middle", "ring", "pinky")
-            finger_index = min(3, max(0, round((abs(obj.location.x) - .72) / .043 + 1.5)))
-            bone_name=f"{finger_names[finger_index]}.03.{side}"
+            finger_name = next((name for name in ("index","middle","ring","pinky") if name in n), "index")
+            bone_name=f"{finger_name}.03.{side}"
         elif "hands | thumb" in n:
             bone_name="thumb.01.L" if obj.location.x < 0 else "thumb.01.R"
         elif "hands | palm" in n:
@@ -319,12 +314,14 @@ def build(args_value):
         palm=(s*.72,-.16,1.13)
         ball("Hands | palm",palm,(.095,.07,.115),skin,24,16)
         # fingers fan naturally downwards and slightly outward; thumb angles toward body
+        finger_names=("index","middle","ring","pinky")
         for j in range(4):
+            finger_name=finger_names[j]
             fx=palm[0]+(j-1.5)*.043
             top=(fx,palm[1]-.012,palm[2]-.035)
             end=(fx+s*(j-1.5)*.009,palm[1]-.025,palm[2]-.135-(.012 if j in (1,2) else 0))
-            rod("Hands | finger",top,end,.018,skin,12)
-            ball("Hands | fingertip",end,(.019,.019,.021),skin,12,8)
+            rod(f"Hands | {finger_name} finger",top,end,.018,skin,12)
+            ball(f"Hands | {finger_name} fingertip",end,(.019,.019,.021),skin,12,8)
         rod("Hands | thumb",(palm[0]-s*.07,palm[1],palm[2]+.005),(palm[0]-s*.12,palm[1]-.025,palm[2]-.055),.026,skin,12)
     # signature lapel pin and emerald tie detail
     ball("Lapel pin | gold rim",(.39,-.378,1.83),(.052,.018,.052),gold,24,16)
