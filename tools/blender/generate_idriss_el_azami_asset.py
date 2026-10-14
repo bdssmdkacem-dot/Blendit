@@ -222,7 +222,7 @@ def build(args_value):
     target=Vector((0,0,1.52))
     def look(loc):
         cam.location=loc;cam.rotation_euler=(target-cam.location).to_track_quat("-Z","Y").to_euler();scene.camera=cam
-    scene.camera.data.lens=55
+    cam.data.lens=55
     out.mkdir(parents=True,exist_ok=True)
     previews=[]
     for label,loc in [("front",(0,-8,2.45)),("three_quarter",(4,-8,2.7)),("profile",(8,-.2,2.55))]:
