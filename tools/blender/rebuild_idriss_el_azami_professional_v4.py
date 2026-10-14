@@ -248,10 +248,11 @@ def build(out,samples):
     target=Vector((0,-.02,1.62))
     cams=[("front",(0,-8,2.05)),("three_quarter",(5,-7,2.5)),("profile",(8,-.05,2.2))]
     renders=[]
+    face_review_renders=[]
     for name,loc in cams:
         bpy.ops.object.camera_add(location=loc);cam=bpy.context.object;cam.name="V4 camera | "+name
         cam.rotation_euler=(target-cam.location).to_track_quat("-Z","Y").to_euler();cam.data.lens=58;scene.camera=cam
-        scene.render.filepath=str(out/f"idriss_v4_{name}.png");bpy.ops.render.render(write_still=True);renders.append(f"idriss_v4_{name}.png")
+        scene.render.filepath=str(out/f"idriss_v4_{name}.png");bpy.ops.render.render(write_still=True);face_review_renders.append(f"idriss_v4_{name}.png")
         bpy.data.objects.remove(cam,do_unlink=True)
     # Additional face-review renders: the full-body views are too small to judge
     # eyelid contact, nose-to-cheek transitions, mouth placement and the skull
@@ -280,7 +281,8 @@ def build(out,samples):
       "build_generation":"independent_rebuild_not_patch_of_v1_v2_v3",
       "reference_directory":"source/parliament/references/idriss_el_azami_el_idrissi/",
       "reference_usage":"existing design references; no new user reference uploaded",
-      "outputs":{"model":"idriss_el_azami_v4.glb","renders":renders},
+      "outputs":{"model":"idriss_el_azami_v4.glb","renders":[f"idriss_v4_{name}.png" for name,loc in cams]},
+      "face_review_renders":face_review_renders,
       "approval_status":"pending_human_visual_review",
       "likeness_verified":False,
       "reason":"The repository notes that current images are design renders, not verified photographic likeness evidence; visual similarity must be reviewed before approval.",
