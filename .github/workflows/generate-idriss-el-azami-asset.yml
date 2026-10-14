@@ -44,6 +44,11 @@ jobs:
           g=json.loads(raw[20:20+n].decode("utf8").rstrip(" \\t\\r\\n\\0"))
           assert len(g.get("nodes",[]))>=80, f"Unexpectedly sparse model: {len(g.get('nodes',[]))} nodes"
           assert len(g.get("materials",[]))>=8, "Expected layered character materials"
+          node_names=[n.get("name","") for n in g.get("nodes",[])]
+          assert any("RIG | Idriss | full body" in n for n in node_names), "Humanoid armature missing from GLB"
+          assert g.get("skins"), "GLB has no skin/armature binding"
+          assert g.get("animations"), "GLB has no exported animation"
+          print(f"Rig check: {len(g.get('skins',[]))} skin(s), {len(g.get('animations',[]))} animation(s).")
           for view in ("front.png","three_quarter.png","profile.png"):
               b=(p/view).read_bytes()
               assert b[:8]==bytes([137,80,78,71,13,10,26,10]), f"Invalid PNG: {view}"
