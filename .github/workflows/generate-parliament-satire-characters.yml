@@ -10,6 +10,7 @@ on:
       - "tools/blender/validate_parliament_likeness.py"
       - "tests/test_validate_parliament_likeness.py"
       - "docs/parliament-real-figure-caricature-roster.md"
+      - "docs/idriss-el-azami-hero-asset-spec.md"
 
 permissions:
   contents: read
