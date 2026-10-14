@@ -106,15 +106,16 @@ def create_character_rig():
     arm_data.display_type="BBONE"
     arm["rig_status"]="named_humanoid_rig_foundation"
     arm["deformation_status"]="pending_continuous_skin_mesh_and_weight_paint_validation"
-    # Rigid bone parenting lets individual clothing/prop pieces follow their controls.
-    # Keep cameras, studio elements, and the armature itself outside this pass.
+    # Add an armature modifier and explicit vertex weights to each modeled component.
+    # Components currently use rigid per-part weights; continuous skin deformation
+    # and weight-paint refinement remain required before production acceptance.
     for obj in list(bpy.context.scene.objects):
         if obj == arm or obj.type not in {"MESH","CURVE"}:
             continue
         n=obj.name.lower()
         bone_name="root"
         if any(k in n for k in ("shoe","sole")):
-            bone_name="foot.L" if ("left" in n or "-.235" in n) else "foot.R"
+            bone_name="foot.L" if obj.location.x < 0 else "foot.R"
         elif "trouser" in n:
             bone_name="thigh.L" if obj.location.x < 0 else "thigh.R"
         elif any(k in n for k in ("finger","fingertip","thumb","hands | palm")):
@@ -123,7 +124,7 @@ def create_character_rig():
             bone_name="upper_arm.L" if obj.location.x < 0 else "upper_arm.R"
         elif any(k in n for k in ("glasses","eyes |","brows","nose","mouth","mustache","stubble","cheeks","ears","scalp","head |")):
             bone_name="head"
-        elif any(k in n for k in ("neck",)):
+        elif "neck" in n:
             bone_name="neck"
         elif any(k in n for k in ("jacket","shirt","tie","lapel","pin")):
             bone_name="chest"
@@ -131,14 +132,23 @@ def create_character_rig():
             bone_name="foot.L" if obj.location.x < 0 else "foot.R"
         elif obj.location.z < 1.0:
             bone_name="pelvis"
-        if bone_name not in arm_data.bones:
-            bone_name="root"
-        world_matrix=obj.matrix_world.copy()
-        obj.parent=arm
-        obj.parent_type="BONE"
-        obj.parent_bone=bone_name
-        obj.matrix_world=world_matrix
+        if obj.type == "CURVE":
+            bpy.context.view_layer.objects.active=obj
+            obj.select_set(True)
+            bpy.ops.object.convert(target="MESH")
+            obj=bpy.context.object
+            obj.select_set(False)
+        if obj.type != "MESH":
+            continue
+        group=obj.vertex_groups.new(name=bone_name)
+        if len(obj.data.vertices):
+            group.add(list(range(len(obj.data.vertices))),1.0,"REPLACE")
+        modifier=obj.modifiers.new("Character armature deformation","ARMATURE")
+        modifier.object=arm
+        modifier.use_vertex_groups=True
         obj["rig_control_bone"]=bone_name
+        obj["weighting_status"]="rigid_per_part_weights_pending_continuous_skin_refinement"
+    arm["deformation_status"]="per_part_vertex_weights_created; continuous_skin_and_weight_paint_review_pending"
     # A real, inspectable starter action: gentle breathing through the chest control.
     bpy.context.view_layer.objects.active=arm
     arm.select_set(True)
@@ -343,7 +353,7 @@ def build(args_value):
         bpy.context.view_layer.objects.active=rig_obj
     else:
         raise RuntimeError("Rig armature missing before GLB export")
-    bpy.ops.export_scene.gltf(filepath=str(out/"idriss_el_azami_reference_led.glb"),export_format="GLB",use_selection=True,export_apply=True,export_animations=True)
+    bpy.ops.export_scene.gltf(filepath=str(out/"idriss_el_azami_reference_led.glb"),export_format="GLB",use_selection=True,export_apply=False,export_animations=True)
     manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Repository front, three-quarter, profile and multi-angle stylized design sheets.","repository_reference_files":[p.name for p in available_refs],"reference_files_copied_to_output":False,"real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"rig":{"object":"RIG | Idriss | full body","named_bones":True,"starter_action":"Idle_Breathing | starter action","skin_deformation_weights":"not yet validated; continuous skin mesh required","facial_visemes":"not yet implemented","eye_blink_controls":"not yet implemented","animation_acceptance":"pending pose and export review"},"checks":{"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by repository front, three-quarter, profile and multi-angle stylized design references; these do not prove real-person likeness.","Repository images are stylized character/design renders. They guide shape and wardrobe but do not prove real-person likeness; photographic-source and reuse rights remain separately unverified.","Visual quality must be reviewed from the rendered PNGs before acceptance.","The rig and breathing action are a foundation only; this asset is not accepted as a complete production character until continuous skin deformation, facial visemes, eye blinks/gaze, clothing deformation and animation export are tested."]}
     (out/"manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print("ASSET_MANIFEST="+json.dumps(manifest))
