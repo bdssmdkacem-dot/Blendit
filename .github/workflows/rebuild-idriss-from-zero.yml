@@ -1,0 +1,60 @@
+name: Rebuild Idriss El Azami Asset From Zero
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/blender/rebuild_idriss_el_azami_from_zero.py"
+      - "source/parliament/references/idriss_el_azami_el_idrissi/**"
+      - ".github/workflows/rebuild-idriss-from-zero.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild-and-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender python3-numpy libegl1 libgl1
+      - name: Build independent scene and render real evidence
+        run: |
+          PYTHONPATH=/usr/lib/python3/dist-packages blender --background --factory-startup --python tools/blender/rebuild_idriss_el_azami_from_zero.py -- --output-dir build/idriss-el-azami-v2
+      - name: Validate new exports and renders
+        run: |
+          python3 - <<'PY'
+          import json, struct
+          from pathlib import Path
+          p=Path("build/idriss-el-azami-v2")
+          m=json.loads((p/"manifest.json").read_text())
+          assert m["construction"].startswith("independent new scene")
+          assert m["likeness_verified"] is False
+          assert m["approval_status"] == "awaiting_actual_render_review"
+          for name in m["files"]:
+              f=p/name
+              assert f.is_file() and f.stat().st_size>0, f"Missing/empty {name}"
+          raw=(p/"idriss_el_azami_v2_from_zero.glb").read_bytes()
+          magic,version,length=struct.unpack("<4sII",raw[:12])
+          assert magic==b"glTF" and version==2 and length==len(raw), "Invalid GLB"
+          n,kind=struct.unpack("<I4s",raw[12:20]); assert kind==b"JSON"
+          gltf=json.loads(raw[20:20+n].decode("utf8").rstrip(" \\t\\r\\n\\0"))
+          assert len(gltf.get("nodes",[]))>=45, f"Unexpectedly sparse new scene: {len(gltf.get('nodes',[]))} nodes"
+          for view in ("front.png","three_quarter.png","profile.png"):
+              b=(p/view).read_bytes()
+              assert b[:8]==bytes([137,80,78,71,13,10,26,10]), f"Invalid PNG {view}"
+              w,h=struct.unpack(">II",b[16:24])
+              assert w>=1000 and h>=1000, f"Low resolution {view}: {w}x{h}"
+              print(f"{view}: {w}x{h}, {len(b)} bytes")
+          print(f"New GLB validated: {len(gltf.get('nodes',[]))} nodes; visual approval remains pending.")
+          PY
+      - name: Upload new Blender scene, GLB and rendered evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: idriss-el-azami-v2-from-zero-review
+          path: build/idriss-el-azami-v2/
+          if-no-files-found: error
+          retention-days: 30
