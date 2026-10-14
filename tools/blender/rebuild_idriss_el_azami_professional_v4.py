@@ -118,10 +118,9 @@ def build(out,samples):
     # Shoulder slope and sleeve segments form continuous visual flow.
     for side in (-1,1):
         shoulder=(side*.47,0,1.73); elbow=(side*.68,-.015,1.39); wrist=(side*.66,-.09,1.13)
-        uv("V4 | shoulder",shoulder,(.19,.23,.20),suit)
-        rod("V4 | upper sleeve",shoulder,elbow,.145,suit)
-        uv("V4 | elbow",elbow,(.145,.15,.15),suit)
-        rod("V4 | forearm sleeve",elbow,wrist,.112,suit)
+        # Tapered sleeve segments avoid exposed spherical shoulder and elbow joints.
+        rod("V4 | upper sleeve",shoulder,elbow,.132,suit)
+        rod("V4 | forearm sleeve",elbow,wrist,.098,suit)
         # Palm and fingers are joined into a readable hand silhouette with distinct digits.
         hx=wrist[0]; hy=-.13; hz=1.04
         uv("V4 | palm",(hx,hy,hz),(.105,.075,.13),skin,32,20)
@@ -131,19 +130,19 @@ def build(out,samples):
             rod("V4 | finger",(fx,hy-.018,hz-.035),(fx+side*.008,hy-.02,hz-.035-length),.018,skin,12)
         rod("V4 | thumb",(hx-side*.08,hy-.015,hz+.005),(hx-side*.135,hy-.02,hz-.065),.025,skin,12)
     # Neck enters collar; no long exposed neck.
-    rod("V4 | neck",(0,.015,1.76),(0,.005,2.24),.17,skin,32)
+    rod("V4 | neck",(0,.015,1.82),(0,.005,2.19),.135,skin,32)
     # Collar leaves: two shaped tapered panels, instead of a flat rectangular bib.
-    line("V4 | left collar",[(-.16,-.255,1.88),(-.105,-.31,1.73),(0,-.32,1.84)],shirt,.045)
-    line("V4 | right collar",[(.16,-.255,1.88),(.105,-.31,1.73),(0,-.32,1.84)],shirt,.045)
-    cube("V4 | tie knot",(0,-.327,1.82),(.095,.045,.105),tie,.025)
+    line("V4 | left collar",[(-.16,-.255,1.91),(-.105,-.31,1.78),(0,-.32,1.86)],shirt,.035)
+    line("V4 | right collar",[(.16,-.255,1.91),(.105,-.31,1.78),(0,-.32,1.86)],shirt,.035)
+    cube("V4 | tie knot",(0,-.327,1.84),(.08,.035,.085),tie,.018)
     # tie blade taper
-    verts=[(-.045,-.334,1.77),(.045,-.334,1.77),(.085,-.335,1.34),(-.085,-.335,1.34)]
+    verts=[(-.04,-.334,1.80),(.04,-.334,1.80),(.075,-.335,1.36),(-.075,-.335,1.36)]
     mesh=bpy.data.meshes.new("Tie blade mesh");mesh.from_pydata(verts,[],[(0,1,2,3)]);mesh.update()
     o=bpy.data.objects.new("V4 | shaped tie blade",mesh);bpy.context.collection.objects.link(o);o.data.materials.append(tie)
     sol=o.modifiers.new("Tie thickness","SOLIDIFY");sol.thickness=.018
     # Lapels are tapered mesh panels, not boxes.
     for side in (-1,1):
-        vs=[(side*.08,-.303,1.88),(side*.30,-.28,1.83),(side*.18,-.32,1.52),(side*.02,-.33,1.72)]
+        vs=[(side*.08,-.303,1.91),(side*.30,-.28,1.84),(side*.18,-.32,1.54),(side*.02,-.33,1.76)]
         me=bpy.data.meshes.new("Lapel panel mesh");me.from_pydata(vs,[],[(0,1,2,3)]);me.update()
         o=bpy.data.objects.new("V4 | tailored lapel",me);bpy.context.collection.objects.link(o);o.data.materials.append(lapel)
         so=o.modifiers.new("Lapel thickness","SOLIDIFY");so.thickness=.018
