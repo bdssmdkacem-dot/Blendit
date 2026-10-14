@@ -216,17 +216,6 @@ def build(args_value):
     scene.render.resolution_x=1200;scene.render.resolution_y=1200;scene.render.resolution_percentage=100
     scene.render.image_settings.file_format="PNG";scene.render.film_transparent=False
     scene.view_settings.view_transform="AgX"
-    # Keep the official photo as a non-rendering viewport reference only.
-    # It is never copied to output or committed to the repository.
-    ref_obj = bpy.data.objects.new("REFERENCE ONLY | official campaign portrait", None)
-    ref_obj.empty_display_type = "IMAGE"
-    ref_obj.hide_render = True
-    ref_obj.hide_viewport = True
-    ref_obj["source_url"] = "https://elazami.com/assets/hero-azami.png"
-    ref_obj["reuse_rights_verified"] = False
-    ref_obj.data = bpy.data.images.load(str(ref_image), check_existing=True)
-    ref_obj.data.pack()
-    bpy.context.collection.objects.link(ref_obj)
     # orthographic turntable views with a consistent portrait framing
     bpy.ops.object.camera_add(location=(4,-8,3.0));cam=bpy.context.object;cam.name="Studio camera"
     cam.data.type="ORTHO";cam.data.ortho_scale=3.65
