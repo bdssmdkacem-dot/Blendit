@@ -67,7 +67,7 @@ def build(args_value):
     suit=mat("Suit | deep midnight navy",(.025,.055,.105),.36)
     lapel=mat("Lapel | navy satin",(.055,.09,.15),.28)
     shirt=mat("Shirt | ivory",(.86,.84,.77),.42)
-    green=mat("Tie | deep blue matching official portrait",(.035,.105,.28),.3)
+    green=mat("Tie | cobalt blue matching approved portrait",(.035,.12,.48),.3)
     gold=mat("Pin | brushed gold",(.68,.39,.08),.25,.72)
     black=mat("Shoes | polished oxblood black",(.055,.025,.023),.25)
     glasses=mat("Glasses | dark tortoiseshell",(.045,.03,.025),.22,.15)
@@ -97,7 +97,7 @@ def build(args_value):
     mesh=bpy.data.meshes.new("Tie blade mesh")
     verts=[(-.055,-.38,1.78),(.055,-.38,1.78),(.105,-.38,1.36),(0,-.38,1.29),(-.105,-.38,1.36)]
     faces=[(0,1,2,3,4)];mesh.from_pydata(verts,[],faces);mesh.materials.append(green)
-    ob=bpy.data.objects.new("Tie | tapered emerald blade",mesh);bpy.context.collection.objects.link(ob)
+    ob=bpy.data.objects.new("Tie | tapered cobalt-blue blade",mesh);bpy.context.collection.objects.link(ob)
     sol=ob.modifiers.new("Tie thickness","SOLIDIFY");sol.thickness=.025
     # jacket fronts, lapels, buttons and pocket
     for s in (-1,1):
