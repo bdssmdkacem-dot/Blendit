@@ -156,10 +156,10 @@ def build(out,samples):
         uv("V4 | ear inner",(side*.49,-.075,2.55),(.035,.025,.075),skin_shadow,24,16)
         # eye sockets, almond-shaped eye volumes, irises and lids
         x=side*.185
-        uv("V4 | eye socket",(x,-.316,2.665),(.135,.045,.083),skin_shadow)
-        uv("V4 | eye",(x,-.353,2.668),(.105,.035,.052),eye)
-        uv("V4 | iris",(x-side*.006,-.382,2.667),(.036,.018,.039),iris,24,16)
-        uv("V4 | pupil",(x-side*.006,-.397,2.667),(.015,.009,.019),black,16,12)
+        uv("V4 | eye socket",(x,-.316,2.665),(.125,.028,.071),skin_shadow)
+        uv("V4 | eye",(x,-.342,2.668),(.092,.023,.041),eye)
+        uv("V4 | iris",(x-side*.006,-.362,2.667),(.031,.012,.033),iris,24,16)
+        uv("V4 | pupil",(x-side*.006,-.372,2.667),(.013,.007,.017),black,16,12)
         line("V4 | upper eyelid",[(x-.12,-.355,2.676),(x,-.371,2.72),(x+.12,-.355,2.676)],skin_shadow,.016)
         line("V4 | brow",[(x-.125,-.352,2.76),(x,-.38,2.79),(x+.12,-.35,2.765)],hair,.026)
     # nose bridge lofted from glabella to tip with restrained profile
@@ -167,16 +167,18 @@ def build(out,samples):
     uv("V4 | nose tip",(0,-.413,2.475),(.082,.078,.065),skin,32,20)
     for side in (-1,1):
         uv("V4 | nostril",(side*.043,-.462,2.456),(.021,.012,.014),black,16,10)
-        uv("V4 | cheek",(side*.265,-.285,2.48),(.12,.045,.085),skin,32,20)
+        # Cheek volume remains integrated into the continuous head silhouette.
+        line("V4 | subtle nasolabial fold",[(side*.105,-.345,2.405),(side*.16,-.347,2.37),(side*.205,-.33,2.395)],skin_shadow,.006)
     # Mouth plane and shaped lip line, anchored to face rather than floating.
     uv("V4 | upper lip",(0,-.354,2.335),(.105,.025,.022),skin_shadow,32,16)
     line("V4 | mouth line",[(-.105,-.372,2.33),(0,-.381,2.32),(.105,-.372,2.33)],black,.012)
     uv("V4 | lower lip",(0,-.353,2.305),(.078,.021,.018),skin,32,16)
     # Hairline cap with swept locks following the skull rather than a featureless egg cap.
     uv("V4 | hair cap",(0,.005,2.965),(.43,.335,.19),hair,48,28)
-    for i in range(7):
-        x=-.31+i*.103
-        uv("V4 | swept hair lock",(x,-.235,2.99+0.045*math.cos(i*.7)),(.095,.14,.075),hair,24,16)
+    # Fine swept grooves replace the previous stacked bulb-like hair locks.
+    for i in range(5):
+        x=-.29+i*.145
+        line("V4 | swept hair groove",[(x,-.285,2.985),(x+.035,-.302,3.035),(x+.075,-.27,3.075)],hair,.004)
     # Studio scene and three cameras.
     floor=mat("Studio | warm slate",(.085,.095,.115),.78)
     cube("V4 | studio plinth",(0,0,.045),(1.6,1.2,.09),floor,.04)
