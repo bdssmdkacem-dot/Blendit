@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Audit reference-led parliament likeness readiness without requiring Blender.
 
-This tool deliberately separates anonymous archetypes from real-person likenesses.
-A profile is never considered ready merely because a GLB exists.
+Anonymous archetypes are not evidence of real-person likeness. A profile can be
+approved only when its reference, reuse rights, renders, sculpt, and human review
+are all recorded.
 """
 from __future__ import annotations
 
@@ -22,6 +23,12 @@ REQUIRED_VIEWS = ("front", "three_quarter", "profile")
 APPROVED_RIGHTS = {"public_domain", "licensed_for_redistribution", "permission_granted"}
 
 
+def _existing_repo_file(repo_root: Path, relative: str) -> bool:
+    root = repo_root.resolve()
+    path = (root / relative).resolve()
+    return path.is_relative_to(root) and path.is_file() and path.stat().st_size > 0
+
+
 def audit(data: dict, repo_root: Path) -> tuple[list[dict], list[str]]:
     problems: list[str] = []
     results: list[dict] = []
@@ -30,38 +37,52 @@ def audit(data: dict, repo_root: Path) -> tuple[list[dict], list[str]]:
     ids: set[str] = set()
     for profile in data.get("profiles", []):
         pid = profile.get("id", "<missing-id>")
-        missing = []
+        missing: list[str] = []
         if pid in ids:
             problems.append(f"{pid}: duplicate profile id")
         ids.add(pid)
+
         for field in REQUIRED_REFERENCE_FIELDS:
             if not profile.get(field):
                 missing.append(field)
+
         image_path = profile.get("reference_image")
-        if image_path:
-            path = (repo_root / image_path).resolve()
-            if not path.is_relative_to(repo_root.resolve()) or not path.is_file() or path.stat().st_size == 0:
-                missing.append("existing_nonempty_reference_image")
+        if image_path and not _existing_repo_file(repo_root, image_path):
+            missing.append("existing_nonempty_reference_image")
+
         rights = profile.get("reference_rights_status", "")
-        if rights and rights not in APPROVED_RIGHTS:
+        if rights not in APPROVED_RIGHTS:
             missing.append("verified_reuse_rights")
+
         views = profile.get("preview_views", {})
         for view in REQUIRED_VIEWS:
             path_text = views.get(view)
             if not path_text:
                 missing.append(f"{view}_preview")
-            else:
-                path = (repo_root / path_text).resolve()
-                if not path.is_relative_to(repo_root.resolve()) or not path.is_file() or path.stat().st_size == 0:
-                    missing.append(f"existing_{view}_preview")
-        if profile.get("sculpt_status") != "complete":
+            elif not _existing_repo_file(repo_root, path_text):
+                missing.append(f"existing_{view}_preview")
+
+        sculpt_complete = profile.get("sculpt_status") == "complete"
+        if not sculpt_complete:
             missing.append("sculpt_status_complete")
-        if profile.get("approval_status") != "approved":
+        human_approved = profile.get("approval_status") == "approved"
+        if not human_approved:
             missing.append("human_visual_approval")
-        status = "ready_for_review" if not missing else "blocked_on_reference" if any(
-            field in missing for field in REQUIRED_REFERENCE_FIELDS
-        ) or "existing_nonempty_reference_image" in missing or "verified_reuse_rights" in missing else "incomplete"
+
+        reference_gaps = set(REQUIRED_REFERENCE_FIELDS).intersection(missing)
+        reference_gaps.update({"existing_nonempty_reference_image", "verified_reuse_rights"}.intersection(missing))
+        production_gaps = set(missing) - reference_gaps - {"human_visual_approval"}
+        if reference_gaps:
+            status = "blocked_on_reference"
+        elif production_gaps:
+            status = "incomplete"
+        elif not human_approved:
+            status = "ready_for_review"
+        else:
+            status = "approved"
+
         results.append({"id": pid, "status": status, "missing": sorted(set(missing))})
+
     if not results:
         problems.append("No named profiles found.")
     return results, problems
@@ -79,8 +100,14 @@ def main() -> int:
     except (OSError, json.JSONDecodeError) as exc:
         print(f"ERROR: cannot read catalog: {exc}", file=sys.stderr)
         return 2
+
     results, problems = audit(data, root)
-    report = {"schema_version": 1, "catalog_status": data.get("status"), "profiles": results, "errors": problems}
+    report = {
+        "schema_version": 1,
+        "catalog_status": data.get("status"),
+        "profiles": results,
+        "errors": problems,
+    }
     if args.json_out:
         target = (root / args.json_out).resolve()
         if not target.is_relative_to(root):
@@ -88,19 +115,20 @@ def main() -> int:
             return 2
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
     for item in results:
-        missing = ", ".join(item["missing"]) or "all gates satisfied; human sign-off still required"
+        missing = ", ".join(item["missing"]) or "all gates satisfied"
         print(f'{item["id"]}: {item["status"]}; missing: {missing}')
     for problem in problems:
         print(f"ERROR: {problem}", file=sys.stderr)
-    # Missing production inputs are reported as blocked, not treated as a fake pass.
-    # The CI audit passes if the catalog is valid and no profile is falsely approved.
+
     falsely_approved = [
         p["id"] for p in data.get("profiles", [])
-        if p.get("approval_status") == "approved" and p.get("sculpt_status") != "complete"
+        if p.get("approval_status") == "approved"
+        and (p.get("sculpt_status") != "complete" or p.get("reference_rights_status") not in APPROVED_RIGHTS)
     ]
     if falsely_approved:
-        print("ERROR: approved profiles lack completed sculpt: " + ", ".join(falsely_approved), file=sys.stderr)
+        print("ERROR: approved profiles lack a complete sculpt or verified reuse rights: " + ", ".join(falsely_approved), file=sys.stderr)
         return 1
     return 1 if problems else 0
 
