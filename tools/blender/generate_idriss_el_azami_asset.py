@@ -118,11 +118,31 @@ def create_character_rig():
             bone_name="foot.L" if obj.location.x < 0 else "foot.R"
         elif "trouser" in n:
             bone_name="thigh.L" if obj.location.x < 0 else "thigh.R"
-        elif any(k in n for k in ("finger","fingertip","thumb","hands | palm")):
+        elif "hands | finger" in n:
+            side = "L" if obj.location.x < 0 else "R"
+            # Four modeled fingers are currently single rigid segments; keep their
+            # control explicit rather than silently binding them to the palm.
+            finger_index = min(4, max(1, round((abs(obj.location.x) - .72) / .043 + 2.5)))
+            finger_names = ("index", "middle", "ring", "pinky")
+            finger_name = finger_names[min(3, max(0, finger_index - 1))]
+            bone_name=f"{finger_name}.01.{side}"
+        elif "hands | fingertip" in n:
+            side = "L" if obj.location.x < 0 else "R"
+            finger_names = ("index", "middle", "ring", "pinky")
+            finger_index = min(3, max(0, round((abs(obj.location.x) - .72) / .043 + 1.5)))
+            bone_name=f"{finger_names[finger_index]}.03.{side}"
+        elif "hands | thumb" in n:
+            bone_name="thumb.01.L" if obj.location.x < 0 else "thumb.01.R"
+        elif "hands | palm" in n:
             bone_name="hand.L" if obj.location.x < 0 else "hand.R"
+        elif "eyes |" in n:
+            side = "L" if obj.location.x < 0 else "R"
+            bone_name=f"eye.{side}"
         elif any(k in n for k in ("sleeve","cuff")):
             bone_name="upper_arm.L" if obj.location.x < 0 else "upper_arm.R"
-        elif any(k in n for k in ("glasses","eyes |","brows","nose","mouth","mustache","stubble","cheeks","ears","scalp","head |")):
+        elif any(k in n for k in ("mouth |","head | lower jaw")):
+            bone_name="jaw"
+        elif any(k in n for k in ("glasses","brows","nose","mustache","stubble","cheeks","ears","scalp","head |")):
             bone_name="head"
         elif "neck" in n:
             bone_name="neck"
@@ -355,7 +375,7 @@ def build(args_value):
     else:
         raise RuntimeError("Rig armature missing before GLB export")
     bpy.ops.export_scene.gltf(filepath=str(out/"idriss_el_azami_reference_led.glb"),export_format="GLB",use_selection=True,export_apply=False,export_animations=True)
-    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Repository front, three-quarter, profile and multi-angle stylized design sheets.","repository_reference_files":[p.name for p in available_refs],"reference_files_copied_to_output":False,"real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"rig":{"object":"RIG | Idriss | full body","named_bones":True,"starter_action":"Idle_Breathing | starter action","skin_deformation_weights":"not yet validated; continuous skin mesh required","facial_visemes":"not yet implemented","eye_blink_controls":"not yet implemented","animation_acceptance":"pending pose and export review"},"checks":{"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by repository front, three-quarter, profile and multi-angle stylized design references; these do not prove real-person likeness.","Repository images are stylized character/design renders. They guide shape and wardrobe but do not prove real-person likeness; photographic-source and reuse rights remain separately unverified.","Visual quality must be reviewed from the rendered PNGs before acceptance.","The rig and breathing action are a foundation only; this asset is not accepted as a complete production character until continuous skin deformation, facial visemes, eye blinks/gaze, clothing deformation and animation export are tested."]}
+    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Repository front, three-quarter, profile and multi-angle stylized design sheets.","repository_reference_files":[p.name for p in available_refs],"reference_files_copied_to_output":False,"real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"rig":{"object":"RIG | Idriss | full body","named_bones":True,"starter_action":"Idle_Breathing | starter action","skin_deformation_weights":"not yet validated; continuous skin mesh required","facial_visemes":"not yet implemented; jaw and lip parts have jaw-bone assignments only","eye_blink_controls":"eye.L and eye.R bone assignments added; eyelid geometry/blink animation still pending","finger_controls":"individual finger segment controls assigned to modeled finger parts; deformation still requires pose review","animation_acceptance":"pending pose and export review"},"checks":{"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by repository front, three-quarter, profile and multi-angle stylized design references; these do not prove real-person likeness.","Repository images are stylized character/design renders. They guide shape and wardrobe but do not prove real-person likeness; photographic-source and reuse rights remain separately unverified.","Visual quality must be reviewed from the rendered PNGs before acceptance.","The rig and breathing action are a foundation only; this asset is not accepted as a complete production character until continuous skin deformation, facial visemes, eye blinks/gaze, clothing deformation and animation export are tested."]}
     (out/"manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print("ASSET_MANIFEST="+json.dumps(manifest))
 if __name__=="__main__":build(args())
