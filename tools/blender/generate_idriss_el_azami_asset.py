@@ -133,6 +133,7 @@ def create_character_rig():
         elif obj.location.z < 1.0:
             bone_name="pelvis"
         if obj.type == "CURVE":
+            bpy.ops.object.select_all(action="DESELECT")
             bpy.context.view_layer.objects.active=obj
             obj.select_set(True)
             bpy.ops.object.convert(target="MESH")
