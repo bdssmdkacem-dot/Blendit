@@ -280,9 +280,9 @@ def build(args_value):
         # cuffs and subtle seams
         line("Trousers | pressed crease",[(x,-.19,.32),(x,-.19,.82),(x,-.19,1.04)],lapel,.006)
     # torso has shaped shoulder line, waist taper, layered shirt
-    ball("Jacket | sculpted torso",(0,.015,1.43),(.57,.34,.68),suit)
-    ball("Jacket | shoulder left",(-.39,.005,1.79),(.30,.32,.22),suit)
-    ball("Jacket | shoulder right",(.39,.005,1.79),(.30,.32,.22),suit)
+    ball("Jacket | sculpted torso",(0,.015,1.43),(.53,.32,.65),suit)
+    ball("Jacket | shoulder left",(-.37,.005,1.78),(.245,.285,.19),suit)
+    ball("Jacket | shoulder right",(.37,.005,1.78),(.245,.285,.19),suit)
     cube("Shirt | front placket",(0,-.313,1.67),(.30,.055,.49),shirt,.035)
     # collar triangles as small tailored panels
     cube("Shirt | collar left",(-.095,-.352,1.88),(.13,.035,.20),shirt,.018,(0,-.22,-.12))
@@ -301,12 +301,13 @@ def build(args_value):
             ball("Jacket | brass button",(s*.095,-.385,z),(.022,.014,.022),gold,16,10)
         cube("Jacket | pocket welt",(s*.37,-.348,1.69),(.13,.018,.025),lapel,.008)
     # neck and custom head proportions, cheeks/jaw, ears
-    rod("Neck",(0,0,1.88),(0,0,2.18),.155,skin)
+    rod("Neck",(0,0,1.88),(0,0,2.23),.155,skin)
+    ball("Neck | jaw transition",(0,-.005,2.19),(.17,.165,.15),skin,32,20)
     sculpted_head("Head | continuous sculpted craniofacial base", skin)
     for s in (-1,1):
         ball("Ears | outer",(s*.405,-.005,2.47),(.082,.09,.13),skin,24,16)
         ball("Ears | inner",(s*.431,-.071,2.47),(.035,.025,.075),skin_hi,20,12)
-        ball("Cheeks | subtle volume",(s*.22,-.276,2.39),(.14,.085,.13),skin_hi,24,16)
+        ball("Cheeks | subtle volume",(s*.215,-.282,2.395),(.115,.065,.105),skin_hi,24,16)
     # brow ridge and eyes set into face
     for s in (-1,1):
         x=s*.155
@@ -325,18 +326,8 @@ def build(args_value):
     line("Mouth | lower lip",[(-.075,-.382,2.265),(0,-.399,2.258),(.075,-.382,2.265)],skin_hi,.01)
     for s in (-1,1):
         ball("Mustache | shaped lobe",(s*.064,-.388,2.31),(.075,.035,.028),stubble,24,12)
-        # controlled stubble patches along jawline, intentionally individual and subtle
-        for i in range(7):
-            xx=s*(.17+i*.022)
-            zz=2.22+(i%3)*.026
-            ball("Stubble | jaw fleck",(xx,-.326+(i%2)*-.01,zz),(.009,.008,.012),stubble,10,8)
-    # Bald head matching the official campaign portrait; do not invent a silver hairstyle.
-    ball("Scalp | clean bald crown",(0,.015,2.84),(.382,.335,.115),skin,40,24)
-    # subtle grey stubble follows the lower jaw
-    for i in range(17):
-        x=-.24+i*.03
-        for z in (2.22,2.245):
-            ball("Stubble | jawline detail",(x,-.30,z),(.008,.006,.009),stubble,10,8)
+    # Bald crown is part of the continuous craniofacial mesh; avoid a separate cap-like sphere.
+    # Facial hair remains a compact moustache only until a coherent beard surface is modeled.
     # rectangular glasses with rims, bridge, temples; front faces -Y
     for s in (-1,1):
         x=s*.153
@@ -413,7 +404,7 @@ def build(args_value):
     else:
         raise RuntimeError("Rig armature missing before GLB export")
     bpy.ops.export_scene.gltf(filepath=str(out/"idriss_el_azami_reference_led.glb"),export_format="GLB",use_selection=True,export_apply=False,export_animations=True)
-    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Repository front, three-quarter, profile and multi-angle stylized design sheets.","repository_reference_files":[p.name for p in available_refs],"reference_files_copied_to_output":False,"real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"rig":{"object":"RIG | Idriss | full body","named_bones":True,"starter_action":"Idle_Breathing | starter action","skin_deformation_weights":"not yet validated; continuous skin mesh required","facial_visemes":"not yet implemented; jaw and lip parts have jaw-bone assignments only","eye_blink_controls":"eye.L and eye.R bone assignments added; eyelid geometry/blink animation still pending","finger_controls":"individual finger segment controls assigned to modeled finger parts; deformation still requires pose review","animation_acceptance":"pending pose and export review"},"checks":{"continuous_sculpted_head_mesh":True,"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by repository front, three-quarter, profile and multi-angle stylized design references; these do not prove real-person likeness.","Repository images are stylized character/design renders. They guide shape and wardrobe but do not prove real-person likeness; photographic-source and reuse rights remain separately unverified.","Visual quality must be reviewed from the rendered PNGs before acceptance.","The rig and breathing action are a foundation only; this asset is not accepted as a complete production character until continuous skin deformation, facial visemes, eye blinks/gaze, clothing deformation and animation export are tested."]}
+    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Repository front, three-quarter, profile and multi-angle stylized design sheets.","repository_reference_files":[p.name for p in available_refs],"reference_files_copied_to_output":False,"real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"rig":{"object":"RIG | Idriss | full body","named_bones":True,"starter_action":"Idle_Breathing | starter action","skin_deformation_weights":"not yet validated; continuous skin mesh required","facial_visemes":"not yet implemented; jaw and lip parts have jaw-bone assignments only","eye_blink_controls":"eye.L and eye.R bone assignments added; eyelid geometry/blink animation still pending","finger_controls":"individual finger segment controls assigned to modeled finger parts; deformation still requires pose review","animation_acceptance":"pending pose and export review"},"checks":{"continuous_sculpted_head_mesh":True,"integrated_crown_no_cap_sphere":True,"jawline_no_floating_stubble":True,"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by repository front, three-quarter, profile and multi-angle stylized design references; these do not prove real-person likeness.","Repository images are stylized character/design renders. They guide shape and wardrobe but do not prove real-person likeness; photographic-source and reuse rights remain separately unverified.","Visual quality must be reviewed from the rendered PNGs before acceptance.","The rig and breathing action are a foundation only; this asset is not accepted as a complete production character until continuous skin deformation, facial visemes, eye blinks/gaze, clothing deformation and animation export are tested."]}
     (out/"manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print("ASSET_MANIFEST="+json.dumps(manifest))
 if __name__=="__main__":build(args())
