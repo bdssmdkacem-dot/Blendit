@@ -53,6 +53,48 @@ def line(n,pts,m,r=.018):
     for p,v in zip(s.points,pts):p.co=(*v,1)
     o=bpy.data.objects.new(n,c);bpy.context.collection.objects.link(o);o.data.materials.append(m);return o
 
+def sculpted_head(n, material):
+    """Continuous, shaped craniofacial base: narrower chin, cheek width, tapered jaw and forehead."""
+    # Each ring defines (height, half-width, front depth, back depth, center-y).
+    # Face points toward -Y. Dense rings avoid the generic sphere + sphere silhouette.
+    rings = [
+        (2.205, .115, .205, .205, -.005),
+        (2.235, .190, .265, .270, -.002),
+        (2.285, .255, .305, .325,  .000),
+        (2.345, .302, .333, .350,  .000),
+        (2.415, .345, .350, .365,  .000),
+        (2.500, .375, .355, .372,  .004),
+        (2.585, .382, .345, .368,  .006),
+        (2.665, .365, .330, .355,  .010),
+        (2.735, .337, .305, .330,  .012),
+        (2.790, .275, .260, .285,  .015),
+        (2.825, .170, .165, .180,  .015),
+        (2.838, .015, .015, .015,  .015),
+    ]
+    segments = 48
+    verts, faces = [], []
+    for z, width, front, back, cy in rings:
+        for j in range(segments):
+            a = 2 * math.pi * j / segments
+            sn, cs = math.sin(a), math.cos(a)
+            # Front half uses a slightly flatter facial plane; rear remains rounded.
+            y = cy - front * cs if cs >= 0 else cy + back * (-cs)
+            verts.append((width * sn, y, z))
+    for ri in range(len(rings)-1):
+        for j in range(segments):
+            a = ri*segments+j
+            b = ri*segments+(j+1)%segments
+            faces.append((a,b,b+segments,a+segments))
+    faces.append(tuple(range(segments-1,-1,-1)))
+    faces.append(tuple((len(rings)-1)*segments+j for j in range(segments)))
+    mesh = bpy.data.meshes.new(n + " | continuous sculpted topology")
+    mesh.from_pydata(verts, [], faces); mesh.materials.append(material); mesh.update()
+    obj = bpy.data.objects.new(n, mesh); bpy.context.collection.objects.link(obj)
+    for poly in mesh.polygons: poly.use_smooth = True
+    sub = obj.modifiers.new("Sculpted silhouette smoothing", "SUBSURF"); sub.levels=2; sub.render_levels=2
+    obj["construction"]="continuous_ring_mesh_tapered_jaw_cheeks_and_forehead"
+    return obj
+
 
 def create_character_rig():
     """Create a named humanoid control skeleton and bone-parent rigid components.
@@ -260,8 +302,7 @@ def build(args_value):
         cube("Jacket | pocket welt",(s*.37,-.348,1.69),(.13,.018,.025),lapel,.008)
     # neck and custom head proportions, cheeks/jaw, ears
     rod("Neck",(0,0,1.88),(0,0,2.18),.155,skin)
-    ball("Head | cranial volume",(0,0,2.49),(.405,.365,.50),skin,48,32)
-    ball("Head | lower jaw",(0,-.018,2.29),(.33,.34,.27),skin,40,28)
+    sculpted_head("Head | continuous sculpted craniofacial base", skin)
     for s in (-1,1):
         ball("Ears | outer",(s*.405,-.005,2.47),(.082,.09,.13),skin,24,16)
         ball("Ears | inner",(s*.431,-.071,2.47),(.035,.025,.075),skin_hi,20,12)
@@ -372,7 +413,7 @@ def build(args_value):
     else:
         raise RuntimeError("Rig armature missing before GLB export")
     bpy.ops.export_scene.gltf(filepath=str(out/"idriss_el_azami_reference_led.glb"),export_format="GLB",use_selection=True,export_apply=False,export_animations=True)
-    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Repository front, three-quarter, profile and multi-angle stylized design sheets.","repository_reference_files":[p.name for p in available_refs],"reference_files_copied_to_output":False,"real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"rig":{"object":"RIG | Idriss | full body","named_bones":True,"starter_action":"Idle_Breathing | starter action","skin_deformation_weights":"not yet validated; continuous skin mesh required","facial_visemes":"not yet implemented; jaw and lip parts have jaw-bone assignments only","eye_blink_controls":"eye.L and eye.R bone assignments added; eyelid geometry/blink animation still pending","finger_controls":"individual finger segment controls assigned to modeled finger parts; deformation still requires pose review","animation_acceptance":"pending pose and export review"},"checks":{"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by repository front, three-quarter, profile and multi-angle stylized design references; these do not prove real-person likeness.","Repository images are stylized character/design renders. They guide shape and wardrobe but do not prove real-person likeness; photographic-source and reuse rights remain separately unverified.","Visual quality must be reviewed from the rendered PNGs before acceptance.","The rig and breathing action are a foundation only; this asset is not accepted as a complete production character until continuous skin deformation, facial visemes, eye blinks/gaze, clothing deformation and animation export are tested."]}
+    manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Repository front, three-quarter, profile and multi-angle stylized design sheets.","repository_reference_files":[p.name for p in available_refs],"reference_files_copied_to_output":False,"real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"rig":{"object":"RIG | Idriss | full body","named_bones":True,"starter_action":"Idle_Breathing | starter action","skin_deformation_weights":"not yet validated; continuous skin mesh required","facial_visemes":"not yet implemented; jaw and lip parts have jaw-bone assignments only","eye_blink_controls":"eye.L and eye.R bone assignments added; eyelid geometry/blink animation still pending","finger_controls":"individual finger segment controls assigned to modeled finger parts; deformation still requires pose review","animation_acceptance":"pending pose and export review"},"checks":{"continuous_sculpted_head_mesh":True,"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by repository front, three-quarter, profile and multi-angle stylized design references; these do not prove real-person likeness.","Repository images are stylized character/design renders. They guide shape and wardrobe but do not prove real-person likeness; photographic-source and reuse rights remain separately unverified.","Visual quality must be reviewed from the rendered PNGs before acceptance.","The rig and breathing action are a foundation only; this asset is not accepted as a complete production character until continuous skin deformation, facial visemes, eye blinks/gaze, clothing deformation and animation export are tested."]}
     (out/"manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print("ASSET_MANIFEST="+json.dumps(manifest))
 if __name__=="__main__":build(args())
