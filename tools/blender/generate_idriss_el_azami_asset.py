@@ -12,7 +12,8 @@ def args():
     if "--output-dir" in av: out=av[av.index("--output-dir")+1]
     ref_image=None
     if "--reference-image" in av: ref_image=Path(av[av.index("--reference-image")+1])
-    return Path(out), ref_image
+    refs=Path("source/parliament/references/idriss_el_azami_el_idrissi")
+    return Path(out), refs, ref_image
 
 def mat(n,c,rough=.48,metal=0):
     m=bpy.data.materials.new(n); m.diffuse_color=(*c,1); m.use_nodes=True
@@ -76,6 +77,20 @@ def build(args_value):
     pupil=mat("Eyes | pupil",(.012,.009,.008),.2)
     mouth=mat("Mouth | dark muted rose",(.19,.065,.055),.6)
     stubble=mat("Facial hair | charcoal grey",(.16,.15,.14),.85)
+    # Load repository design sheets as hidden, non-rendering references in the .blend.
+    # Do not pack or copy them into generated outputs; they remain source-controlled files.
+    ref_collection = bpy.data.collections.new("REFERENCE SHEETS | repository only")
+    bpy.context.scene.collection.children.link(ref_collection)
+    for ref_path in available_refs:
+        img = bpy.data.images.load(str(ref_path.resolve()), check_existing=True)
+        obj = bpy.data.objects.new("REFERENCE | " + ref_path.name, None)
+        obj.empty_display_type = "IMAGE"
+        obj.data = img
+        obj.hide_render = True
+        obj.hide_viewport = True
+        obj["source_path"] = ref_path.as_posix()
+        obj["reference_role"] = "stylized design and wardrobe guide; not photographic identity proof"
+        ref_collection.objects.link(obj)
     # feet, trouser silhouette and bespoke suit torso
     for s in (-1,1):
         x=s*.235
