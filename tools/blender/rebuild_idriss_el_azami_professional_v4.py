@@ -63,14 +63,14 @@ def head_mesh(skin):
     # Explicit anatomical cross-sections: chin, jaw angle, cheek plane,
     # temple, brow and cranial vault are shaped as one continuous surface.
     rings=[
-      (2.075,.155,.160,-.030),(2.105,.245,.208,-.028),
-      (2.16,.315,.255,-.023),(2.235,.365,.292,-.015),
-      (2.315,.392,.320,.000),(2.405,.425,.337,.008),
-      (2.505,.447,.350,.012),(2.615,.458,.356,.014),
-      (2.725,.452,.354,.015),(2.825,.430,.346,.018),
-      (2.915,.390,.325,.020),(2.985,.330,.285,.020),
-      (3.045,.245,.225,.018),(3.085,.145,.145,.015),
-      (3.095,.055,.065,.012)]
+      (2.075,.115,.125,-.030),(2.105,.205,.185,-.028),
+      (2.16,.285,.238,-.023),(2.235,.342,.278,-.015),
+      (2.315,.378,.309,.000),(2.405,.420,.332,.008),
+      (2.505,.444,.350,.012),(2.615,.452,.356,.014),
+      (2.725,.440,.350,.015),(2.825,.412,.337,.018),
+      (2.915,.365,.310,.020),(2.985,.300,.266,.020),
+      (3.045,.220,.210,.018),(3.085,.125,.132,.015),
+      (3.095,.035,.045,.012)]
     n=64; verts=[]; faces=[]
     for ri,(z,rx,ry,yc) in enumerate(rings):
         for j in range(n):
@@ -80,8 +80,8 @@ def head_mesh(skin):
             # pull the mouth/jaw back slightly, and flatten the cheek planes.
             front=max(0.0,-sn)
             lower=max(0.0,min(1.0,(2.48-z)/.38))
-            chin_push=.055*math.exp(-((z-2.13)/.10)**2)*front
-            cheek_flat=.018*math.exp(-((z-2.43)/.16)**2)*front
+            chin_push=.072*math.exp(-((z-2.13)/.10)**2)*front
+            cheek_flat=.030*math.exp(-((z-2.43)/.16)**2)*front
             jaw_taper=1.0-.035*lower
             x=rx*cs*jaw_taper
             y=yc+ry*sn-chin_push+cheek_flat
@@ -186,8 +186,8 @@ def build(out,samples):
     # The nose is a single lofted anatomical form, not stacked spheres.
     head_mesh(skin)
     for side in (-1,1):
-        uv("V4 | integrated ear",(side*.414,-.006,2.535),(.052,.061,.112),skin,40,28)
-        line("V4 | ear antihelix",[(side*.414,-.061,2.585),(side*.398,-.067,2.55),(side*.414,-.061,2.51)],skin_shadow,.007)
+        uv("V4 | integrated ear",(side*.397,.006,2.535),(.048,.052,.103),skin,40,28)
+        line("V4 | ear antihelix",[(side*.397,-.041,2.578),(side*.386,-.045,2.55),(side*.397,-.041,2.515)],skin_shadow,.005)
         x=side*.169
         uv("V4 | orbital shadow",(x,-.313,2.665),(.094,.009,.034),skin_shadow,40,24)
         uv("V4 | eye",(x,-.324,2.665),(.061,.008,.015),eye,40,24)
@@ -217,8 +217,8 @@ def build(out,samples):
     for p in nm.polygons:p.use_smooth=True
     ns=no.modifiers.new("Nose surface refinement","SUBSURF"); ns.levels=2; ns.render_levels=2
     for side in (-1,1):
-        uv("V4 | alar wing",(side*.033,-.400,2.461),(.018,.018,.015),skin,32,20)
-        uv("V4 | nostril",(side*.031,-.417,2.454),(.009,.004,.006),black,20,12)
+        uv("V4 | alar wing",(side*.033,-.376,2.461),(.016,.015,.013),skin,32,20)
+        uv("V4 | nostril",(side*.031,-.392,2.454),(.008,.003,.005),black,20,12)
     # Restrained adult mouth: narrow lip volumes, defined philtrum and subtle asymmetry.
     line("V4 | philtrum left",[(-.022,-.342,2.385),(-.017,-.350,2.357)],skin_shadow,.004)
     line("V4 | philtrum right",[(.022,-.342,2.385),(.017,-.350,2.357)],skin_shadow,.004)
