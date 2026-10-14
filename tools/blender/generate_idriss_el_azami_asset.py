@@ -331,10 +331,19 @@ def build(args_value):
     bpy.ops.wm.save_as_mainfile(filepath=str(out/"idriss_el_azami_reference_led.blend"))
     bpy.ops.object.select_all(action="DESELECT")
     for o in bpy.context.scene.objects:
-        if o.type in {"MESH","CURVE"} and not o.name.startswith("Studio |"):
+        if (o.type in {"MESH","CURVE","ARMATURE"}
+                and not o.name.startswith("Studio |")
+                and not o.name.startswith("Studio camera")
+                and not o.name.startswith("Key |")
+                and not o.name.startswith("Fill |")
+                and not o.name.startswith("Rim |")):
             o.select_set(True)
-    bpy.context.view_layer.objects.active=next((o for o in bpy.context.scene.objects if o.select_get()),None)
-    bpy.ops.export_scene.gltf(filepath=str(out/"idriss_el_azami_reference_led.glb"),export_format="GLB",use_selection=True,export_apply=True)
+    rig_obj=next((o for o in bpy.context.scene.objects if o.type=="ARMATURE" and o.name=="RIG | Idriss | full body"),None)
+    if rig_obj:
+        bpy.context.view_layer.objects.active=rig_obj
+    else:
+        raise RuntimeError("Rig armature missing before GLB export")
+    bpy.ops.export_scene.gltf(filepath=str(out/"idriss_el_azami_reference_led.glb"),export_format="GLB",use_selection=True,export_apply=True,export_animations=True)
     manifest={"asset_id":"idriss_el_azami_el_idrissi_reference_led_v1","status":"prototype_needs_human_review_and_verified_photo_for_likeness","reference_art_direction":"Repository front, three-quarter, profile and multi-angle stylized design sheets.","repository_reference_files":[p.name for p in available_refs],"reference_files_copied_to_output":False,"real_person_likeness_verified":False,"visual_reference":"user-supplied portrait in current conversation; intentionally not copied into repository","photo_source_verified":False,"approval_status":"ready_for_visual_review_not_approved","files":["idriss_el_azami_reference_led.blend","idriss_el_azami_reference_led.glb",*previews],"rig":{"object":"RIG | Idriss | full body","named_bones":True,"starter_action":"Idle_Breathing | starter action","skin_deformation_weights":"not yet validated; continuous skin mesh required","facial_visemes":"not yet implemented","eye_blink_controls":"not yet implemented","animation_acceptance":"pending pose and export review"},"checks":{"separate_hands_and_fingers":True,"glasses_frames_and_temples":True,"bald_head_reference_alignment":True,"layered_suit_shirt_tie_lapel_pin":True,"front_three_quarter_profile_renders":True},"notes":["Procedural model guided by repository front, three-quarter, profile and multi-angle stylized design references; these do not prove real-person likeness.","Repository images are stylized character/design renders. They guide shape and wardrobe but do not prove real-person likeness; photographic-source and reuse rights remain separately unverified.","Visual quality must be reviewed from the rendered PNGs before acceptance.","The rig and breathing action are a foundation only; this asset is not accepted as a complete production character until continuous skin deformation, facial visemes, eye blinks/gaze, clothing deformation and animation export are tested."]}
     (out/"manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print("ASSET_MANIFEST="+json.dumps(manifest))
