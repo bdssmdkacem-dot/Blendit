@@ -287,7 +287,10 @@ def main():
         manifest["characters"].append({"id":spec["id"],"file":glb.name,"preview":spec["id"]+"_preview.png",
                                        "expression":spec["expression"],"pose":spec["pose"],
                                        "status":"generated_pending_visual_review"})
-        bpy.ops.object.select_all(action="SELECT"); bpy.ops.object.delete(use_global=False)
+        # Remove only this character; keep the shared camera and lights for the next render.
+        for obj in objs:
+            if obj.name in bpy.data.objects:
+                bpy.data.objects.remove(obj, do_unlink=True)
     (out/"manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
     print("PARLIAMENT_CHARACTER_PACK="+str(out))
     print("CHARACTERS="+", ".join(x["id"] for x in specs))
