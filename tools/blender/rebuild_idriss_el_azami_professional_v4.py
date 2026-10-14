@@ -180,7 +180,7 @@ def build(out,samples):
     # Studio scene and three cameras.
     floor=mat("Studio | warm slate",(.085,.095,.115),.78)
     cube("V4 | studio plinth",(0,0,.045),(1.6,1.2,.09),floor,.04)
-    scene=bpy.context.scene; scene.render.engine="CYCLES";scene.cycles.samples=samples;scene.cycles.use_denoising=True
+    scene=bpy.context.scene; scene.render.engine="CYCLES";scene.cycles.samples=samples;scene.cycles.use_denoising=False  # Ubuntu Blender build lacks OpenImageDenoiser; keep render portable
     scene.render.resolution_x=1200;scene.render.resolution_y=1200;scene.render.resolution_percentage=100
     scene.render.image_settings.file_format="PNG";scene.view_settings.view_transform="AgX"
     scene.world.color=(.12,.12,.12)
