@@ -7,6 +7,7 @@ on:
       - "tools/blender/generate_parliament_satire_characters.py"
       - ".github/workflows/generate-parliament-satire-characters.yml"
       - "data/parliament/real_figure_profiles.json"
+      - "tools/blender/validate_parliament_likeness.py"
       - "docs/parliament-real-figure-caricature-roster.md"
 
 permissions:
@@ -45,6 +46,9 @@ jobs:
           print(f"Validated {len(profiles)} source-tracked named-figure profiles; no likeness is falsely marked approved.")
           PY
 
+      - name: Audit real-figure likeness readiness (never infer approval from generic cast)
+        run: python3 tools/blender/validate_parliament_likeness.py --json-out build/parliament-likeness-audit.json
+
       - name: Generate fictional cast
         run: |
           PYTHONPATH=/usr/lib/python3/dist-packages blender --background --factory-startup --python tools/blender/generate_parliament_satire_characters.py -- --output-dir build/parliament-characters --samples 8
@@ -82,6 +86,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: fictional-parliament-satire-characters
-          path: build/parliament-characters/
+          path: |
+            build/parliament-characters/
+            build/parliament-likeness-audit.json
           if-no-files-found: error
           retention-days: 14
