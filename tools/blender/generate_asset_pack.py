@@ -346,27 +346,35 @@ def create_pine_tree(origin, bark, foliage):
         bpy.context.collection.objects.link(obj)
         parts.append(obj)
 
+    # Denser, overlapping boughs break the ring-like silhouette. The lower
+    # skirt is intentionally broad; the crown tightens gradually rather than
+    # reading as a stack of separate geometric tiers.
     tier_data = [
-        (0.48, 0.78, 0.32, 0.20),
-        (0.72, 0.76, 0.30, 0.19),
-        (0.96, 0.66, 0.27, 0.17),
-        (1.20, 0.57, 0.24, 0.15),
-        (1.43, 0.47, 0.21, 0.13),
-        (1.64, 0.37, 0.18, 0.11),
-        (1.83, 0.28, 0.15, 0.09),
-        (2.00, 0.19, 0.12, 0.07),
+        (0.39, 0.83, 0.34, 0.23),
+        (0.56, 0.80, 0.33, 0.22),
+        (0.74, 0.76, 0.30, 0.20),
+        (0.92, 0.69, 0.28, 0.18),
+        (1.10, 0.62, 0.25, 0.16),
+        (1.28, 0.55, 0.23, 0.15),
+        (1.46, 0.47, 0.20, 0.13),
+        (1.63, 0.39, 0.18, 0.11),
+        (1.79, 0.31, 0.16, 0.10),
+        (1.94, 0.24, 0.14, 0.08),
+        (2.07, 0.17, 0.11, 0.06),
     ]
     for tier, (height, length, width, droop) in enumerate(tier_data):
-        count = 9 if tier < 4 else 8
-        phase = tier * 0.37
+        count = 11 if tier < 5 else 9
+        phase = tier * 0.43
         for index in range(count):
             angle = (2.0 * 3.141592653589793 * index / count) + phase
-            # Slight tier-to-tier length variation prevents a perfect radial ring.
-            variation = 0.91 + 0.09 * sin(index * 2.17 + tier * 1.31)
+            # Broader deterministic variation creates a less mechanical edge.
+            wave = sin(index * 2.17 + tier * 1.31)
+            variation = 0.84 + 0.16 * (0.5 + 0.5 * wave)
+            height_jitter = 0.035 * sin(index * 1.7 + tier * 0.83)
             make_bough(
                 "Pine tree | layered leaf bough %02d-%02d" % (tier + 1, index + 1),
-                angle, height + 0.025 * sin(index * 1.7 + tier),
-                length * variation, width * variation, droop,
+                angle, height + height_jitter,
+                length * variation, width * (0.88 + 0.12 * variation), droop,
             )
 
     # A narrow terminal leader completes the natural conifer crown.
