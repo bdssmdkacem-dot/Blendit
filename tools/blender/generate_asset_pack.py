@@ -313,7 +313,18 @@ def create_pine_tree(origin, bark, foliage):
     # Build overlapping leaf-like boughs as tapered, slightly drooping low-poly
     # meshes. This avoids the visibly stacked-cone silhouette and reads better
     # from front, side, and oblique gameplay cameras.
-    def make_bough(name, angle, height, length, width, droop):
+    # Subtle foliage value shifts keep overlapping boughs readable without
+    # introducing a painted-on texture or changing the selected art preset.
+    base_rgb = tuple(float(channel) for channel in foliage.diffuse_color[:3])
+    foliage_variants = []
+    for variant_index, factor in enumerate((0.78, 0.92, 1.0, 1.08)):
+        rgb = tuple(max(0.0, min(1.0, channel * factor)) for channel in base_rgb)
+        foliage_variants.append(material(
+            "Pine foliage variation %02d" % (variant_index + 1),
+            rgb, roughness=0.72,
+        ))
+
+    def make_bough(name, angle, height, length, width, droop, bough_material):
         radial = Vector((cos(angle), sin(angle), 0.0))
         tangent = Vector((-sin(angle), cos(angle), 0.0))
         profile = [
@@ -343,7 +354,7 @@ def create_pine_tree(origin, bark, foliage):
             faces.append((i, nxt, nxt + count, i + count))
         mesh = bpy.data.meshes.new(name + " mesh")
         mesh.from_pydata(verts, [], faces)
-        mesh.materials.append(foliage)
+        mesh.materials.append(bough_material)
         mesh.update()
         obj = bpy.data.objects.new(name, mesh)
         bpy.context.collection.objects.link(obj)
@@ -378,6 +389,7 @@ def create_pine_tree(origin, bark, foliage):
                 "Pine tree | layered leaf bough %02d-%02d" % (tier + 1, index + 1),
                 angle, height + height_jitter,
                 length * variation, width * (0.88 + 0.12 * variation), droop,
+                foliage_variants[(tier * 3 + index) % len(foliage_variants)],
             )
 
     # A narrow terminal leader completes the natural conifer crown.
