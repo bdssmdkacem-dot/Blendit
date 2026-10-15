@@ -356,8 +356,15 @@ def create_pine_tree(origin, bark, foliage):
         mesh.from_pydata(verts, [], faces)
         mesh.materials.append(bough_material)
         mesh.update()
+        # A small edge bevel catches highlights and softens the paper-cut
+        # silhouette without destroying the deliberately low-poly style.
         obj = bpy.data.objects.new(name, mesh)
         bpy.context.collection.objects.link(obj)
+        bevel_mod = obj.modifiers.new("Soft foliage edges", "BEVEL")
+        bevel_mod.width = min(0.028, width * 0.12)
+        bevel_mod.segments = 2
+        bevel_mod.limit_method = "ANGLE"
+        obj.modifiers.new("Foliage weighted normals", "WEIGHTED_NORMAL")
         parts.append(obj)
 
     # Denser, overlapping boughs break the ring-like silhouette. The lower
