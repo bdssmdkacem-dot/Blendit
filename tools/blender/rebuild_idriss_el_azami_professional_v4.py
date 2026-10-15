@@ -80,8 +80,8 @@ def head_mesh(skin):
             # pull the mouth/jaw back slightly, and flatten the cheek planes.
             front=max(0.0,-sn)
             lower=max(0.0,min(1.0,(2.48-z)/.38))
-            chin_push=.072*math.exp(-((z-2.13)/.10)**2)*front
-            cheek_flat=.030*math.exp(-((z-2.43)/.16)**2)*front
+            chin_push=.095*math.exp(-((z-2.14)/.115)**2)*front
+            cheek_flat=.045*math.exp(-((z-2.43)/.145)**2)*front
             jaw_taper=1.0-.035*lower
             x=rx*cs*jaw_taper
             y=yc+ry*sn-chin_push+cheek_flat
@@ -93,12 +93,12 @@ def head_mesh(skin):
                 return depth*math.exp(-((x-cx)/sx)**2-((z-cz)/sz)**2)
             orbit=0.0
             for side in (-1,1):
-                orbit += bump(side*.17,2.665,.112,.060,.034)
-                orbit += bump(side*.205,2.465,.145,.115,-.028)
-                orbit += bump(side*.285,2.565,.112,.155,-.012)
+                orbit += bump(side*.17,2.665,.115,.067,.025)
+                orbit += bump(side*.205,2.465,.145,.120,-.040)
+                orbit += bump(side*.285,2.565,.115,.155,-.020)
             brow_plane=0.0
             for side in (-1,1):
-                brow_plane += bump(side*.17,2.715,.135,.047,-.020)
+                brow_plane += bump(side*.17,2.715,.145,.052,-.030)
             muzzle=bump(0.0,2.365,.155,.090,-.016)
             y += frontal*(orbit+brow_plane+muzzle)
             # Slightly narrower mid-face and broader upper temples avoid an egg profile.
@@ -189,19 +189,19 @@ def build(out,samples):
         uv("V4 | integrated ear",(side*.397,.006,2.535),(.048,.052,.103),skin,40,28)
         line("V4 | ear antihelix",[(side*.397,-.041,2.578),(side*.386,-.045,2.55),(side*.397,-.041,2.515)],skin_shadow,.005)
         x=side*.169
-        uv("V4 | orbital shadow",(x,-.316,2.665),(.088,.006,.030),skin_shadow,40,24)
-        uv("V4 | eye",(x,-.328,2.665),(.054,.006,.013),eye,40,24)
-        uv("V4 | iris",(x-side*.003,-.334,2.665),(.013,.0035,.013),iris,28,18)
-        uv("V4 | pupil",(x-side*.003,-.337,2.665),(.006,.0025,.008),black,20,12)
+        uv("V4 | orbital shadow",(x,-.323,2.665),(.090,.010,.034),skin_shadow,40,24)
+        uv("V4 | eye",(x,-.337,2.665),(.057,.012,.019),eye,40,24)
+        uv("V4 | iris",(x-side*.003,-.349,2.665),(.015,.006,.015),iris,28,18)
+        uv("V4 | pupil",(x-side*.003,-.354,2.665),(.007,.004,.009),black,20,12)
         line("V4 | upper eyelid",[(x-.078,-.318,2.669),(x-.040,-.330,2.680),(x+.006,-.332,2.681),(x+.078,-.318,2.665)],skin,.010)
         line("V4 | lower eyelid",[(x-.075,-.318,2.658),(x-.025,-.328,2.653),(x+.035,-.328,2.654),(x+.075,-.318,2.658)],skin_shadow,.005)
         uv("V4 | brow ridge",(x,-.309,2.714),(.100,.010,.022),skin,40,24)
         line("V4 | brow",[(x-.108,-.319,2.735),(x-.061,-.329,2.748),(x-.012,-.332,2.747),(x+.045,-.327,2.737),(x+.103,-.315,2.727)],hair,.012)
     nose_rings=[
-        (2.603,.010,.010,-.335),(2.575,.021,.022,-.348),
-        (2.535,.027,.034,-.361),(2.495,.036,.039,-.376),
-        (2.474,.042,.036,-.386),(2.457,.031,.023,-.379),
-        (2.449,.014,.014,-.367)]
+        (2.603,.012,.010,-.329),(2.575,.023,.020,-.342),
+        (2.535,.030,.030,-.356),(2.495,.038,.036,-.369),
+        (2.474,.040,.032,-.375),(2.457,.029,.022,-.371),
+        (2.449,.014,.014,-.360)]
     nv=[]; nf=[]; nn=32
     for z,rx,ry,cy in nose_rings:
         for j in range(nn):
@@ -217,14 +217,14 @@ def build(out,samples):
     for p in nm.polygons:p.use_smooth=True
     ns=no.modifiers.new("Nose surface refinement","SUBSURF"); ns.levels=2; ns.render_levels=2
     for side in (-1,1):
-        uv("V4 | alar wing",(side*.030,-.374,2.461),(.013,.010,.010),skin,32,20)
-        uv("V4 | nostril",(side*.028,-.390,2.454),(.006,.002,.0035),black,20,12)
+        uv("V4 | alar wing",(side*.030,-.366,2.461),(.015,.012,.011),skin,32,20)
+        uv("V4 | nostril",(side*.027,-.382,2.454),(.006,.003,.0035),black,20,12)
     # Restrained adult mouth: narrow lip volumes, defined philtrum and subtle asymmetry.
     line("V4 | philtrum left",[(-.020,-.327,2.385),(-.016,-.333,2.357)],skin_shadow,.003)
     line("V4 | philtrum right",[(.020,-.327,2.385),(.016,-.333,2.357)],skin_shadow,.003)
-    uv("V4 | upper lip",(0,-.332,2.337),(.065,.006,.008),skin_shadow,36,20)
-    line("V4 | mouth line",[(-.068,-.334,2.337),(-.036,-.337,2.333),(0,-.338,2.331),(.040,-.337,2.335),(.068,-.333,2.34)],black,.004)
-    uv("V4 | lower lip",(0,-.330,2.315),(.052,.006,.007),skin,36,20)
+    uv("V4 | upper lip",(0,-.333,2.337),(.067,.009,.011),skin_shadow,36,20)
+    line("V4 | mouth line",[(-.070,-.339,2.337),(-.036,-.342,2.333),(0,-.343,2.331),(.040,-.342,2.335),(.070,-.338,2.34)],black,.004)
+    uv("V4 | lower lip",(0,-.333,2.315),(.056,.009,.010),skin,36,20)
     # Chin crease gives the lower face a less smooth, toy-like transition.
     line("V4 | chin crease",[(-.045,-.315,2.255),(0,-.321,2.248),(.045,-.315,2.255)],skin_shadow,.003)
     # Hairline follows a flatter, slightly receding adult forehead silhouette.
@@ -280,7 +280,7 @@ def build(out,samples):
       "asset_id":"idriss_el_azami_el_idrissi_v4",
       "build_generation":"independent_rebuild_not_patch_of_v1_v2_v3",
       "reference_directory":"source/parliament/references/idriss_el_azami_el_idrissi/",
-      "reference_usage":"existing design references; no new user reference uploaded",
+      "reference_usage":"includes newly added Idriss reference JPG; compare proportions against it during human review",
       "outputs":{"model":"idriss_el_azami_v4.glb","renders":[f"idriss_v4_{name}.png" for name,loc in cams]},
       "face_review_renders":face_review_renders,
       "approval_status":"pending_human_visual_review",
