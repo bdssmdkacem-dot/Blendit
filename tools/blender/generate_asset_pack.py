@@ -329,7 +329,10 @@ def create_pine_tree(origin, bark, foliage):
         verts = []
         for side in (-1.0, 1.0):
             for distance, dz, spread in profile:
-                p = Vector((x, y, z + height + dz)) + radial * distance + tangent * (spread + side * thickness)
+                # Give each bough real vertical thickness instead of offsetting
+                # two nearly coplanar skins sideways. This prevents paper-thin
+                # foliage when the asset is viewed from an oblique camera.
+                p = Vector((x, y, z + height + dz + side * thickness)) + radial * distance + tangent * spread
                 verts.append(tuple(p))
         count = len(profile)
         faces = []
