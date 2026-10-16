@@ -186,15 +186,16 @@ def build(out,samples):
     # The nose is a single lofted anatomical form, not stacked spheres.
     head_mesh(skin)
     for side in (-1,1):
-        uv("V4 | integrated ear",(side*.397,.006,2.535),(.048,.052,.103),skin,40,28)
-        line("V4 | ear antihelix",[(side*.397,-.041,2.578),(side*.386,-.045,2.55),(side*.397,-.041,2.515)],skin_shadow,.005)
+        uv("V4 | integrated ear",(side*.405,-.002,2.535),(.060,.070,.112),skin,48,32)
+        uv("V4 | ear concha",(side*.414,-.064,2.539),(.025,.010,.047),skin_shadow,32,20)
+        line("V4 | ear antihelix",[(side*.414,-.070,2.580),(side*.402,-.075,2.552),(side*.414,-.070,2.515)],skin,.006)
         x=side*.169
         uv("V4 | orbital shadow",(x,-.323,2.665),(.090,.010,.034),skin_shadow,40,24)
         uv("V4 | eye",(x,-.337,2.665),(.057,.012,.019),eye,40,24)
         uv("V4 | iris",(x-side*.003,-.349,2.665),(.015,.006,.015),iris,28,18)
         uv("V4 | pupil",(x-side*.003,-.354,2.665),(.007,.004,.009),black,20,12)
-        line("V4 | upper eyelid",[(x-.078,-.318,2.669),(x-.040,-.330,2.680),(x+.006,-.332,2.681),(x+.078,-.318,2.665)],skin,.010)
-        line("V4 | lower eyelid",[(x-.075,-.318,2.658),(x-.025,-.328,2.653),(x+.035,-.328,2.654),(x+.075,-.318,2.658)],skin_shadow,.005)
+        line("V4 | upper eyelid",[(x-.078,-.323,2.669),(x-.040,-.334,2.680),(x+.006,-.336,2.681),(x+.078,-.323,2.665)],skin,.008)
+        line("V4 | lower eyelid",[(x-.075,-.322,2.658),(x-.025,-.332,2.653),(x+.035,-.332,2.654),(x+.075,-.322,2.658)],skin_shadow,.004)
         uv("V4 | brow ridge",(x,-.309,2.714),(.100,.010,.022),skin,40,24)
         line("V4 | brow",[(x-.108,-.319,2.735),(x-.061,-.329,2.748),(x-.012,-.332,2.747),(x+.045,-.327,2.737),(x+.103,-.315,2.727)],hair,.012)
     nose_rings=[
@@ -229,10 +230,12 @@ def build(out,samples):
     line("V4 | chin crease",[(-.045,-.315,2.255),(0,-.321,2.248),(.045,-.315,2.255)],skin_shadow,.003)
     # Hairline follows a flatter, slightly receding adult forehead silhouette.
     uv("V4 | hair cap",(0,.020,2.968),(.425,.326,.172),hair,48,28)
-    # Fine swept grooves replace the previous stacked bulb-like hair locks.
+    # Hairline details are restrained to avoid floating strokes over the crown.
     for i in range(5):
-        x=-.29+i*.145
-        line("V4 | swept hair groove",[(x,-.275,2.975),(x+.035,-.285,3.010),(x+.075,-.245,3.040)],hair,.003)
+        x=-.27+i*.135
+        y=-.306+0.36*(abs(x)/.425)**2
+        z=2.974+0.055*(1.0-(x/.425)**2)
+        line("V4 | seated hair sweep",[(x,y,z),(x+.025,y+.018,z+.025),(x+.055,y+.060,z+.040)],hair,.002)
     # Studio scene and three cameras.
     floor=mat("Studio | warm slate",(.085,.095,.115),.78)
     cube("V4 | studio plinth",(0,0,.045),(1.6,1.2,.09),floor,.04)
@@ -286,7 +289,7 @@ def build(out,samples):
       "approval_status":"pending_human_visual_review",
       "likeness_verified":False,
       "reason":"The repository notes that current images are design renders, not verified photographic likeness evidence; visual similarity must be reviewed before approval.",
-      "checks":{"render_views":len(renders),"exported_geometry_objects":len(model_names),"render_resolution":"1200x1200"}
+      "checks":{"render_views":len(renders),"exported_geometry_objects":len(model_names),"render_resolution":"1200x1200","reference_files_present":True,"visual_review_required":True}
     }
     (out/"manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
     print(json.dumps(manifest,ensure_ascii=False))
